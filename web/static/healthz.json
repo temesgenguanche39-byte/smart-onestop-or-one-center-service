@@ -1,0 +1,5 @@
+{
+  "status": "HEALTHY",
+  "service": "smart-onestop-platform",
+  "environment": "vercel-cloud"
+}
