@@ -2,7 +2,9 @@ package database
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,47 +33,56 @@ func SeedDatabase(db *gorm.DB) error {
 	}
 	db.Create(&city)
 
-	kirkos := domain.AdministrativeStructure{
-		Name:      "Kirkos Sub-City Administration",
-		Level:     domain.AdminLevelSubCity,
-		ParentID:  &city.ID,
-		Code:      "ETH-AA-KIRKOS",
-		CreatedAt: time.Now().UTC(),
+	type subCityDef struct {
+		Name  string
+		Code  string
+		Count int
 	}
-	bole := domain.AdministrativeStructure{
-		Name:      "Bole Sub-City Administration",
-		Level:     domain.AdminLevelSubCity,
-		ParentID:  &city.ID,
-		Code:      "ETH-AA-BOLE",
-		CreatedAt: time.Now().UTC(),
-	}
-	db.Create(&kirkos)
-	db.Create(&bole)
 
-	woreda01 := domain.AdministrativeStructure{
-		Name:      "Kirkos Woreda 01 Administration",
-		Level:     domain.AdminLevelWoreda,
-		ParentID:  &kirkos.ID,
-		Code:      "ETH-AA-KIR-W01",
-		CreatedAt: time.Now().UTC(),
+	subCitiesList := []subCityDef{
+		{"አዲስ ከተማ (Addis Ketema)", "ETH-AA-ADK", 14},
+		{"አራዳ (Arada)", "ETH-AA-ARD", 10},
+		{"ቂርቆስ (Kirkos)", "ETH-AA-KIR", 11},
+		{"ልደታ (Lideta)", "ETH-AA-LID", 10},
+		{"የካ (Yeka)", "ETH-AA-YEK", 14},
+		{"ቦሌ (Bole)", "ETH-AA-BOL", 15},
+		{"ጉለሌ (Gullele)", "ETH-AA-GUL", 11},
+		{"ኮልፌ ቀራኒዮ (Kolfe Keranio)", "ETH-AA-KOL", 15},
+		{"ንፋስ ስልክ ላፍቶ (Nifas Silk Lafto)", "ETH-AA-NSL", 15},
+		{"አካቂ ቃሊቲ (Akaki Kality)", "ETH-AA-AKK", 13},
+		{"ለሚ ኩራ (Lemi Kura)", "ETH-AA-LMK", 10},
 	}
-	woreda02 := domain.AdministrativeStructure{
-		Name:      "Kirkos Woreda 02 Administration",
-		Level:     domain.AdminLevelWoreda,
-		ParentID:  &kirkos.ID,
-		Code:      "ETH-AA-KIR-W02",
-		CreatedAt: time.Now().UTC(),
+
+	var kirkosSubCityID, kirkosWoreda01ID uint
+	for _, sc := range subCitiesList {
+		subCityRecord := domain.AdministrativeStructure{
+			Name:      sc.Name,
+			Level:     domain.AdminLevelSubCity,
+			ParentID:  &city.ID,
+			Code:      sc.Code,
+			CreatedAt: time.Now().UTC(),
+		}
+		db.Create(&subCityRecord)
+		if sc.Code == "ETH-AA-KIR" {
+			kirkosSubCityID = subCityRecord.ID
+		}
+
+		for w := 1; w <= sc.Count; w++ {
+			wCode := fmt.Sprintf("%s-W%02d", sc.Code, w)
+			wName := fmt.Sprintf("%s ወረዳ %02d", strings.Split(sc.Name, " ")[0], w)
+			woredaRecord := domain.AdministrativeStructure{
+				Name:      wName,
+				Level:     domain.AdminLevelWoreda,
+				ParentID:  &subCityRecord.ID,
+				Code:      wCode,
+				CreatedAt: time.Now().UTC(),
+			}
+			db.Create(&woredaRecord)
+			if sc.Code == "ETH-AA-KIR" && w == 1 {
+				kirkosWoreda01ID = woredaRecord.ID
+			}
+		}
 	}
-	woreda03 := domain.AdministrativeStructure{
-		Name:      "Bole Woreda 03 Administration",
-		Level:     domain.AdminLevelWoreda,
-		ParentID:  &bole.ID,
-		Code:      "ETH-AA-BOL-W03",
-		CreatedAt: time.Now().UTC(),
-	}
-	db.Create(&woreda01)
-	db.Create(&woreda02)
-	db.Create(&woreda03)
 
 	// 2. Service Types
 	serviceTypes := []domain.ServiceType{
@@ -129,7 +140,7 @@ func SeedDatabase(db *gorm.DB) error {
 			PhoneNumber:  "+251911000003",
 			PasswordHash: defaultHash,
 			Role:         domain.RoleSubcityManager,
-			StructureID:  &kirkos.ID,
+			StructureID:  &kirkosSubCityID,
 			IsActive:     true,
 			CreatedAt:    time.Now().UTC(),
 		},
@@ -140,7 +151,7 @@ func SeedDatabase(db *gorm.DB) error {
 			PhoneNumber:  "+251911000004",
 			PasswordHash: defaultHash,
 			Role:         domain.RoleWoredaOfficer,
-			StructureID:  &woreda01.ID,
+			StructureID:  &kirkosWoreda01ID,
 			IsActive:     true,
 			CreatedAt:    time.Now().UTC(),
 		},
@@ -151,7 +162,7 @@ func SeedDatabase(db *gorm.DB) error {
 			PhoneNumber:  "+251911000005",
 			PasswordHash: defaultHash,
 			Role:         domain.RoleServiceDeskAgent,
-			StructureID:  &woreda01.ID,
+			StructureID:  &kirkosWoreda01ID,
 			IsActive:     true,
 			CreatedAt:    time.Now().UTC(),
 		},
@@ -168,7 +179,7 @@ func SeedDatabase(db *gorm.DB) error {
 		FullName:          "Tewodros Assefa",
 		PhoneNumber:       "+251912345678",
 		NationalID:        "ETH-NAT-883492",
-		WoredaID:          &woreda01.ID,
+		WoredaID:          &kirkosWoreda01ID,
 		HouseNumber:       "142/B",
 		PreferredLanguage: "am",
 		CreatedAt:         time.Now().UTC(),
@@ -178,7 +189,7 @@ func SeedDatabase(db *gorm.DB) error {
 		FullName:          "Genet Wolde",
 		PhoneNumber:       "+251922334455",
 		NationalID:        "ETH-NAT-774411",
-		WoredaID:          &woreda01.ID,
+		WoredaID:          &kirkosWoreda01ID,
 		HouseNumber:       "089",
 		PreferredLanguage: "am",
 		CreatedAt:         time.Now().UTC(),
@@ -188,7 +199,7 @@ func SeedDatabase(db *gorm.DB) error {
 		FullName:          "Dawit Kebede",
 		PhoneNumber:       "+251933445566",
 		NationalID:        "ETH-NAT-556677",
-		WoredaID:          &woreda02.ID,
+		WoredaID:          &kirkosWoreda01ID,
 		HouseNumber:       "311",
 		PreferredLanguage: "am",
 		CreatedAt:         time.Now().UTC(),
@@ -206,7 +217,7 @@ func SeedDatabase(db *gorm.DB) error {
 		TicketNumber:       "TKT-2026-100234",
 		CitizenID:          citizen1.ID,
 		ServiceTypeID:      serviceTypes[0].ID,
-		CurrentStructureID: woreda01.ID,
+		CurrentStructureID: kirkosWoreda01ID,
 		AssignedToUserID:   &woredaOfficer.ID,
 		Title:              "Boundary Wall and Land Survey Discrepancy",
 		Description:        "The neighboring commercial plot encroached 2.5 meters onto our certified residential parcel. Woreda survey department hasn't finalized inspection.",
@@ -226,7 +237,7 @@ func SeedDatabase(db *gorm.DB) error {
 		TicketNumber:       "TKT-2026-100582",
 		CitizenID:          citizen2.ID,
 		ServiceTypeID:      serviceTypes[1].ID,
-		CurrentStructureID: woreda01.ID,
+		CurrentStructureID: kirkosWoreda01ID,
 		Title:              "Unresolved Commercial License Renewal Delay",
 		Description:        "Application submitted over 3 days ago for retail pharmacy license renewal. Official did not sign off within mandated 24-hour SLA.",
 		Status:             domain.StatusSubmitted,
@@ -246,7 +257,7 @@ func SeedDatabase(db *gorm.DB) error {
 		TicketNumber:       "TKT-2026-100891",
 		CitizenID:          citizen3.ID,
 		ServiceTypeID:      serviceTypes[2].ID,
-		CurrentStructureID: woreda02.ID,
+		CurrentStructureID: kirkosWoreda01ID,
 		AssignedToUserID:   &woredaOfficer.ID,
 		Title:              "Kebele House Tenancy Transfer Dispute",
 		Description:        "Deceased parent's tenancy transfer denied without written justification. Requesting direct hearing with presiding officer.",
