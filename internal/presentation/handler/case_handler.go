@@ -227,3 +227,28 @@ func (h *CaseHandler) ManualEscalate(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Case escalated to higher administrative tier"})
 }
+
+// AddAttachment handles official document and audio memo uploads
+func (h *CaseHandler) AddAttachment(c *gin.Context) {
+	idStr := c.Param("id")
+	caseID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid case UUID format"})
+		return
+	}
+
+	var req dto.AddAttachmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	officialID := middleware.GetCurrentUserID(c)
+	att, err := h.caseService.AddAttachment(c.Request.Context(), caseID, &officialID, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, att)
+}

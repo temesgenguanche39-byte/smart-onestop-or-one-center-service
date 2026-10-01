@@ -31,6 +31,7 @@ type CaseRepository interface {
 	List(ctx context.Context, filter CaseFilter) ([]Case, int64, error)
 	FetchAndLockBreachedCases(ctx context.Context, now time.Time, limit int) ([]Case, error)
 	CountByStatus(ctx context.Context, structureID *uint) (map[CaseStatus]int64, error)
+	AddAttachment(ctx context.Context, att *CaseAttachment) error
 }
 
 // StructureRepository defines administrative structure hierarchy lookups

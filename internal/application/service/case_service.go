@@ -515,6 +515,38 @@ func (s *CaseService) buildCaseDetailResponse(ctx context.Context, c *domain.Cas
 	return resp, nil
 }
 
+// AddAttachment attaches evidence documents, voice memos, and surveys to a case
+func (s *CaseService) AddAttachment(ctx context.Context, caseID uuid.UUID, performerID *uuid.UUID, req dto.AddAttachmentRequest) (*domain.CaseAttachment, error) {
+	c, err := s.caseRepo.GetByID(ctx, caseID)
+	if err != nil {
+		return nil, domain.ErrCaseNotFound
+	}
+
+	att := &domain.CaseAttachment{
+		ID:               uuid.New(),
+		CaseID:           c.ID,
+		FileName:         req.FileName,
+		FileURL:          req.FileURL,
+		MIMEType:         req.MIMEType,
+		ExtractedOCRText: req.ExtractedOCRText,
+		UploadedAt:       time.Now().UTC(),
+	}
+
+	if err := s.caseRepo.AddAttachment(ctx, att); err != nil {
+		return nil, fmt.Errorf("failed to save attachment: %w", err)
+	}
+
+	_ = s.auditRepo.Log(ctx, &domain.CaseAuditLog{
+		CaseID:      c.ID,
+		PerformedBy: performerID,
+		Action:      "ATTACHMENT_ADDED",
+		Notes:       fmt.Sprintf("Attached evidence: %s (%s)", att.FileName, att.MIMEType),
+		CreatedAt:   time.Now().UTC(),
+	})
+
+	return att, nil
+}
+
 func mapToCaseResponse(c *domain.Case) dto.CaseResponse {
 	now := time.Now().UTC()
 	diff := c.SLADeadline.Sub(now).Hours()

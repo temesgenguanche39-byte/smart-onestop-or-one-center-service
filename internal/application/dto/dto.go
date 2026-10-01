@@ -28,6 +28,13 @@ type AttachmentDTO struct {
 	ExtractedOCRText string `json:"extracted_ocr_text"`
 }
 
+type AddAttachmentRequest struct {
+	FileName         string `json:"file_name" binding:"required"`
+	FileURL          string `json:"file_url" binding:"required"`
+	MIMEType         string `json:"mime_type"`
+	ExtractedOCRText string `json:"extracted_ocr_text"`
+}
+
 // CaseResponse representation for listing
 type CaseResponse struct {
 	ID                 uuid.UUID               `json:"id"`

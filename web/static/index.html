@@ -802,6 +802,401 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: CASE DOSSIER & EVIDENCE DETAIL VIEW (DOCUMENTS, AUDIO, AUDIT)      -->
+  <!-- ========================================================================= -->
+  <div id="caseDetailModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('caseDetailModal')">
+    <div class="modal-dialog case-detail-modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.85rem;">
+          <span style="font-size:1.6rem; line-height:1;">📂</span>
+          <div>
+            <h3 class="modal-title" style="margin:0; font-size:1.3rem;">Municipal Case Dossier & Evidence Vault</h3>
+            <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:2px;">የጉዳይ ዝርዝር መዝገብ፣ የሰነድ ማስረጃዎች እና የድምፅ ቃለ-መጠይቆች ማዕከል</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('caseDetailModal')">&times;</button>
+      </div>
+
+      <!-- Quick Summary Strip -->
+      <div class="cd-summary-strip">
+        <div class="cd-summary-left">
+          <span class="ticket-cell" id="cdModalTicket" style="font-size:0.95rem; font-weight:700;">TKT-000000</span>
+          <span id="cdModalStatus" class="status-badge status-UNDER_REVIEW">UNDER REVIEW</span>
+          <span id="cdModalSla" class="sla-tag normal">SLA Active</span>
+          <span style="color:var(--text-secondary); font-size:0.82rem; margin-left:0.4rem;">Applicant: <strong id="cdModalCitizen" style="color:var(--cyan-400);">--</strong></span>
+        </div>
+        <div class="cd-summary-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="cdBtnHearing" onclick="openHearingModalFromDossier()" title="Schedule Virtual Hearing">
+            <span class="btn-icon">📅</span> Hearing
+          </button>
+          <button type="button" class="btn btn-warning btn-sm" id="cdBtnEscalate" onclick="escalateCaseFromDossier()" title="Escalate Jurisdiction Tier">
+            <span class="btn-icon">⚡</span> Escalate
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="cdBtnResolve" onclick="resolveCaseFromDossier()" title="Certify & Resolve">
+            <span class="btn-icon">✍️</span> Resolve
+          </button>
+        </div>
+      </div>
+
+      <!-- Dossier Subtab Navigation -->
+      <div class="cd-subtab-bar">
+        <button type="button" class="cd-subtab-btn active" id="cdTabBtnOverview" onclick="switchCaseDetailTab('overview')">
+          <span>📋 Overview & Case Profile</span>
+        </button>
+        <button type="button" class="cd-subtab-btn" id="cdTabBtnDocs" onclick="switchCaseDetailTab('docs')">
+          <span>📎 Documents & Evidence</span>
+          <span class="cd-tab-badge" id="cdDocTabBadge">0</span>
+        </button>
+        <button type="button" class="cd-subtab-btn" id="cdTabBtnAudio" onclick="switchCaseDetailTab('audio')">
+          <span>🎙️ Voice Memos & Audio</span>
+          <span class="cd-tab-badge" id="cdAudioTabBadge">0</span>
+        </button>
+        <button type="button" class="cd-subtab-btn" id="cdTabBtnAudit" onclick="switchCaseDetailTab('audit')">
+          <span>📜 Audit Ledger</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Modal Body -->
+      <div class="modal-body cd-scrollable-body">
+
+        <!-- TAB 1: OVERVIEW & PROFILE -->
+        <div id="cdPanelOverview" class="cd-tab-panel">
+          <div class="cd-grid-2">
+            <!-- Citizen Profile Card -->
+            <div class="cd-section-card">
+              <div class="cd-card-header">
+                <span class="cd-card-icon">👤</span>
+                <h4>Citizen & Applicant Profile</h4>
+              </div>
+              <div class="cd-card-body">
+                <div class="cd-field-row">
+                  <span class="cd-label">Full Legal Name:</span>
+                  <span class="cd-val" id="cdCitizenName">--</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">Phone Contact:</span>
+                  <span class="cd-val" id="cdCitizenPhone">--</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">National / Kebele ID:</span>
+                  <span class="cd-val" id="cdCitizenNationalId">--</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">Registered Address:</span>
+                  <span class="cd-val" id="cdCitizenAddress">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Administrative Hierarchy Card -->
+            <div class="cd-section-card">
+              <div class="cd-card-header">
+                <span class="cd-card-icon">🏛️</span>
+                <h4>Administrative Jurisdiction</h4>
+              </div>
+              <div class="cd-card-body">
+                <div class="cd-field-row">
+                  <span class="cd-label">Jurisdiction Tier:</span>
+                  <span class="cd-val" id="cdJurisdictionTier" style="font-weight:700; color:var(--cyan-400);">--</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">Office / Structure:</span>
+                  <span class="cd-val" id="cdStructureName">--</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">Assigned Officer:</span>
+                  <span class="cd-val" id="cdAssignedOfficer">Unassigned (Desk Queue)</span>
+                </div>
+                <div class="cd-field-row">
+                  <span class="cd-label">SLA Target Duration:</span>
+                  <span class="cd-val" id="cdSlaTarget">-- hours</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grievance Classification & Priority Strip -->
+          <div class="cd-section-card" style="margin-top:1rem;">
+            <div class="cd-card-header">
+              <span class="cd-card-icon">📑</span>
+              <h4>Grievance Classification & Filing Details</h4>
+            </div>
+            <div class="cd-card-body">
+              <div class="cd-field-row">
+                <span class="cd-label">Municipal Service Type:</span>
+                <span class="cd-val" id="cdServiceTypeName" style="font-weight:700;">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Classification Category:</span>
+                <span class="cd-val" id="cdCategoryName">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Case Priority:</span>
+                <span class="cd-val" id="cdPriorityBadge">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Lodged Date & Time:</span>
+                <span class="cd-val" id="cdLodgedDate">--</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Full Grievance Statement -->
+          <div class="cd-section-card" style="margin-top:1rem;">
+            <div class="cd-card-header">
+              <span class="cd-card-icon">📝</span>
+              <h4>Full Citizen Grievance Statement / የቅሬታው ዝርዝር መግለጫ</h4>
+            </div>
+            <div class="cd-card-body">
+              <div class="cd-grievance-text-box" id="cdGrievanceText">
+                -- No description provided --
+              </div>
+            </div>
+          </div>
+
+          <!-- Virtual Hearing Card (if scheduled) -->
+          <div class="cd-section-card" id="cdHearingSection" style="margin-top:1rem; display:none;">
+            <div class="cd-card-header">
+              <span class="cd-card-icon">📅</span>
+              <h4>Presiding Virtual Hearing Appointment</h4>
+            </div>
+            <div class="cd-card-body">
+              <div class="cd-field-row">
+                <span class="cd-label">Hearing Date:</span>
+                <span class="cd-val" id="cdHearingDate" style="font-weight:700; color:var(--cyan-400);">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Time Window:</span>
+                <span class="cd-val" id="cdHearingTime">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Presiding Official:</span>
+                <span class="cd-val" id="cdHearingOfficer">--</span>
+              </div>
+              <div class="cd-field-row" style="margin-top:0.5rem;">
+                <span class="cd-label">Virtual Hearing Room:</span>
+                <a id="cdHearingRoomLink" href="#" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
+                  <span>🎥 Enter Digital Hearing Room</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Official Resolution Card (if resolved) -->
+          <div class="cd-section-card" id="cdResolutionSection" style="margin-top:1rem; display:none; border-color:var(--emerald-500);">
+            <div class="cd-card-header" style="color:var(--emerald-400);">
+              <span class="cd-card-icon">🛡️</span>
+              <h4>Official Certified Resolution</h4>
+            </div>
+            <div class="cd-card-body">
+              <div class="cd-field-row">
+                <span class="cd-label">Certifying Official:</span>
+                <span class="cd-val" id="cdResolvedBy" style="font-weight:700; color:var(--emerald-400);">--</span>
+              </div>
+              <div class="cd-field-row">
+                <span class="cd-label">Resolution Timestamp:</span>
+                <span class="cd-val" id="cdResolvedAt">--</span>
+              </div>
+              <div style="margin-top:0.75rem;">
+                <span class="cd-label" style="display:block; margin-bottom:0.35rem;">Certified Resolution Statement:</span>
+                <div class="cd-resolution-text-box" id="cdResolutionSummary">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: DOCUMENTS & EVIDENCE (UPLOD DOCUME) -->
+        <div id="cdPanelDocs" class="cd-tab-panel" style="display:none;">
+          <!-- Upload Document Form -->
+          <div class="cd-section-card" style="border-left: 3px solid var(--primary-500);">
+            <div class="cd-card-header">
+              <span class="cd-card-icon">⬆️</span>
+              <h4>Upload & Attach Legal Evidence Document / አዲስ የሰነድ ማስረጃ ያያይዙ</h4>
+            </div>
+            <div class="cd-card-body">
+              <form id="cdUploadDocForm" onsubmit="handleCaseDocUpload(event)">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Evidence Category / የማስረጃ ዓይነት *</label>
+                    <select id="cdDocCategory" class="form-input" required>
+                      <option value="Land Title Deed / የባለይዞታነት ሰነድ">Land Title Deed / የባለይዞታነት ሰነድ</option>
+                      <option value="Surveyor Master Plan / የካርታ ፕላን">Surveyor Master Plan / የካርታ ፕላን</option>
+                      <option value="Legal Court Order / የፍርድ ቤት ውሳኔ">Legal Court Order / የፍርድ ቤት ውሳኔ</option>
+                      <option value="Official Complaint Letter / ማመልከቻ ደብዳቤ">Official Complaint Letter / ማመልከቻ ደብዳቤ</option>
+                      <option value="Citizen National ID / መታወቂያ">Citizen National ID / መታወቂያ</option>
+                      <option value="Tax & Municipal Receipt / የቀረጥ ደረሰኝ">Tax & Municipal Receipt / የቀረጥ ደረሰኝ</option>
+                      <option value="Engineering / Site Inspection / የመስክ ፍተሻ">Engineering / Site Inspection / የመስክ ፍተሻ</option>
+                      <option value="Other Official Proof / ሌላ ማስረጃ">Other Official Proof / ሌላ ማስረጃ</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Document Title / Identifier *</label>
+                    <input type="text" id="cdDocTitle" class="form-input" required placeholder="e.g. 1988 Original Title Certificate or Sub-City Notice">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top:0.75rem;">
+                  <label>Select Document File (PDF, PNG, JPG, JPEG, WEBP, DOCX) *</label>
+                  <input type="file" id="cdDocFileInput" class="form-input" accept=".pdf,image/*,.doc,.docx" required style="padding:0.5rem;">
+                </div>
+
+                <div class="form-group" style="margin-top:0.75rem;">
+                  <label>Extracted Notes, OCR Summary or File Context</label>
+                  <textarea id="cdDocNotes" class="form-input" rows="2" placeholder="Optional notes, registry folio reference, or summary of document contents..."></textarea>
+                </div>
+
+                <div style="margin-top:1rem; display:flex; justify-content:flex-end;">
+                  <button type="submit" class="btn btn-primary" id="cdBtnDocSubmit">
+                    <span>📎 Upload & Cryptographically Attach Document</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Attached Documents Grid -->
+          <div style="margin-top:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <h4 style="margin:0; font-family:var(--font-heading); display:flex; align-items:center; gap:0.5rem;">
+                <span>📂 Case Evidence Repository</span>
+                <span class="cd-counter-badge" id="cdDocCountBadge">0</span>
+              </h4>
+              <span style="font-size:0.78rem; color:var(--text-secondary);">Tamper-evident attachments stored with SHA-256 seal</span>
+            </div>
+            <div id="cdDocsContainer" class="cd-evidence-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: AUDIO & VOICE MEMOS (AUDIO) -->
+        <div id="cdPanelAudio" class="cd-tab-panel" style="display:none;">
+          <div class="cd-grid-2">
+            <!-- Studio 1: Live Voice Recording Studio -->
+            <div class="audio-studio-box">
+              <div class="studio-header">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <span class="studio-mic-icon">🎙️</span>
+                  <div>
+                    <h4 style="margin:0; font-size:1rem; color:white;">Live Audio Recording Studio</h4>
+                    <div style="font-size:0.72rem; color:var(--text-secondary);">የድምፅ ቃለ-መጠይቅ፣ ቃል እና የምስክርነት መቅረጫ</div>
+                  </div>
+                </div>
+                <div class="recording-badge" id="cdRecordPulseBadge" style="display:none;">
+                  <span class="recording-dot"></span>
+                  <span id="cdRecordStatusText">RECORDING</span>
+                </div>
+              </div>
+
+              <!-- Live Studio Display -->
+              <div class="studio-screen">
+                <div class="studio-timer" id="cdRecordTimer">00:00</div>
+                <div class="studio-waveform-visual" id="cdStudioVisual">
+                  <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <audio id="cdAudioRecorderPreview" controls style="display:none; width:100%; margin-top:0.75rem; border-radius:8px;"></audio>
+              </div>
+
+              <!-- Studio Controls -->
+              <div class="studio-controls">
+                <button type="button" class="btn btn-danger btn-sm" id="cdBtnStartRecord" onclick="startAudioRecording()">
+                  <span>🔴 Start Recording</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="cdBtnStopRecord" onclick="stopAudioRecording()" disabled>
+                  <span>⏹️ Stop Recording</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="cdBtnRetakeRecord" onclick="retakeAudioRecording()" style="display:none;">
+                  <span>🔄 Retake</span>
+                </button>
+              </div>
+
+              <!-- Save Recorded Memo Form -->
+              <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.75rem;">
+                <label style="font-size:0.78rem; color:var(--text-secondary); display:block; margin-bottom:0.25rem;">Voice Memo Title / Context *</label>
+                <input type="text" id="cdVoiceMemoTitle" class="form-input" placeholder="e.g. Citizen verbal testimony on land boundary dispute" style="font-size:0.85rem; padding:0.45rem 0.75rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="cdBtnSaveRecord" onclick="saveAudioAttachment()" disabled style="width:100%; margin-top:0.6rem;">
+                  <span>💾 Attach Recorded Voice Memo to Case</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Studio 2: Direct Audio File Upload -->
+            <div class="cd-section-card" style="border-left:3px solid var(--purple-500);">
+              <div class="cd-card-header">
+                <span class="cd-card-icon">📻</span>
+                <div>
+                  <h4 style="margin:0; font-size:1rem;">Upload Pre-Recorded Audio File</h4>
+                  <div style="font-size:0.72rem; color:var(--text-secondary);">የተቀረጸ የድምፅ ፋይል ያያይዙ (.mp3, .wav, .m4a, .webm)</div>
+                </div>
+              </div>
+              <div class="cd-card-body">
+                <form id="cdUploadAudioForm" onsubmit="handleAudioFileUpload(event)">
+                  <div class="form-group">
+                    <label>Audio File Label / Description *</label>
+                    <input type="text" id="cdAudioFileTitle" class="form-input" required placeholder="e.g. Official phone interview with Woreda Surveyor">
+                  </div>
+                  <div class="form-group" style="margin-top:0.75rem;">
+                    <label>Select Audio Recording *</label>
+                    <input type="file" id="cdAudioFileInput" class="form-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac" required style="padding:0.5rem;">
+                  </div>
+                  <div class="form-group" style="margin-top:0.75rem;">
+                    <label>Notes / Audio Transcript</label>
+                    <textarea id="cdAudioNotes" class="form-input" rows="2" placeholder="Summary of what was stated in this audio file..."></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-secondary" id="cdBtnUploadAudio" style="width:100%; margin-top:1rem;">
+                    <span>⬆️ Upload & Attach Audio File</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Memo Archive -->
+          <div style="margin-top:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <h4 style="margin:0; font-family:var(--font-heading); display:flex; align-items:center; gap:0.5rem;">
+                <span>🎙️ Case Audio Records & Voice Memos</span>
+                <span class="cd-counter-badge" id="cdAudioCountBadge">0</span>
+              </h4>
+              <span style="font-size:0.78rem; color:var(--text-secondary);">Embedded in-browser playback player</span>
+            </div>
+            <div id="cdAudioContainer" class="cd-audio-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: AUDIT LEDGER TRAIL -->
+        <div id="cdPanelAudit" class="cd-tab-panel" style="display:none;">
+          <div class="cd-section-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon">📜</span>
+              <div>
+                <h4 style="margin:0;">Immutable Case Audit Ledger</h4>
+                <div style="font-size:0.76rem; color:var(--text-secondary);">Cryptographically sequenced administrative action trail</div>
+              </div>
+            </div>
+            <div class="cd-card-body">
+              <div id="cdAuditContainer" class="cd-timeline-container">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer cd-modal-footer">
+        <span style="font-size:0.76rem; color:var(--text-secondary); margin-right:auto;">
+          🛡️ Municipal Integrity Seal & Cloud Vault Active
+        </span>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('caseDetailModal')">Close Dossier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- MODAL: PROVISION NEW OFFICIAL USER                                        -->
   <!-- ========================================================================= -->
   <div id="createUserModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('createUserModal')">

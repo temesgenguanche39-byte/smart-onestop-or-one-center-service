@@ -175,3 +175,7 @@ func (r *GormCaseRepository) CountByStatus(ctx context.Context, structureID *uin
 	}
 	return counts, nil
 }
+
+func (r *GormCaseRepository) AddAttachment(ctx context.Context, att *domain.CaseAttachment) error {
+	return r.db.WithContext(ctx).Create(att).Error
+}

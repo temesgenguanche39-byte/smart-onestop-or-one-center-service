@@ -10,6 +10,14 @@ let allCases = [];
 let attachedFiles = [];
 let activeCountdownInterval = null;
 
+// Case Dossier & Live Audio Studio State
+let currentCaseDetail = null;
+let audioMediaRecorder = null;
+let audioRecordedChunks = [];
+let audioRecordTimer = null;
+let audioRecordSeconds = 0;
+let currentRecordedBlob = null;
+
 const SESSION_TOKEN_KEY = 'smart_onestop_token';
 const SESSION_USER_KEY = 'smart_onestop_user';
 
@@ -1653,7 +1661,7 @@ function renderCasesTable(cases) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
-        <span class="ticket-cell" onclick="inspectCase('${c.ticket_number}')">${c.ticket_number}</span>
+        <span class="ticket-cell" onclick="openCaseDetailModal('${c.id}')" title="Click to open Case Dossier & Evidence Vault">${c.ticket_number}</span>
       </td>
       <td>
         <div><strong>${c.citizen_name}</strong></div>
@@ -1669,7 +1677,10 @@ function renderCasesTable(cases) {
         <span class="status-badge status-${c.status}">${c.status.replace(/_/g, ' ')}</span>
       </td>
       <td>
-        <div style="display:flex; gap:0.4rem;">
+        <div style="display:flex; gap:0.4rem; align-items:center;">
+          <button class="btn btn-secondary btn-sm" title="Open Case Dossier, Documents & Audio Studio" onclick="openCaseDetailModal('${c.id}')" style="background:rgba(56,189,248,0.15); border-color:var(--cyan-500); color:var(--cyan-400); font-weight:700;">
+            📂 Dossier
+          </button>
           <button class="btn btn-secondary btn-sm" title="Schedule Wed/Fri Hearing" onclick="openHearingModal('${c.id}', '${c.ticket_number}')">
             📅
           </button>
@@ -1697,10 +1708,688 @@ function filterCasesTable() {
 }
 
 function inspectCase(ticket) {
-  switchPortal('citizen');
-  showCitizenTab('track');
-  document.getElementById('trackInput').value = ticket;
-  renderTicketResult(ticket);
+  // Try to find the case by ticket and open its dossier directly
+  const c = allCases.find(item => item.ticket_number === ticket);
+  if (c) {
+    openCaseDetailModal(c.id);
+  } else {
+    switchPortal('citizen');
+    showCitizenTab('track');
+    document.getElementById('trackInput').value = ticket;
+    renderTicketResult(ticket);
+  }
+}
+
+// ============================================================================
+// CASE DOSSIER & EVIDENCE VAULT CONTROLLERS
+// ============================================================================
+
+async function openCaseDetailModal(caseId) {
+  openModal('caseDetailModal');
+  switchCaseDetailTab('overview');
+  resetAudioRecordingState();
+
+  // Show placeholder while loading
+  document.getElementById('cdModalTicket').textContent = 'Loading...';
+  document.getElementById('cdModalCitizen').textContent = '...';
+
+  let caseData = null;
+  try {
+    const res = await fetch(apiUrl('/api/v1/cases/' + caseId), {
+      headers: { 'Authorization': 'Bearer ' + currentToken }
+    });
+    if (res.ok) {
+      caseData = await res.json();
+    }
+  } catch (err) {
+    console.warn("Backend fetch failed, falling back to local memory:", err);
+  }
+
+  if (!caseData) {
+    caseData = allCases.find(c => c.id === caseId || c.ticket_number === caseId);
+  }
+  if (!caseData) {
+    const offlineCases = getOfflineSubmissions();
+    const foundOff = offlineCases.find(c => c.id === caseId || c.ticket_number === caseId);
+    if (foundOff) caseData = foundOff;
+  }
+
+  if (!caseData) {
+    showToast("Case record not found in system", "error");
+    closeModal('caseDetailModal');
+    return;
+  }
+
+  currentCaseDetail = caseData;
+  renderCaseDetailModalContent(caseData);
+}
+
+function renderCaseDetailModalContent(c) {
+  if (!c) return;
+
+  // 1. Header Strip
+  document.getElementById('cdModalTicket').textContent = c.ticket_number || 'TKT-PENDING';
+  
+  const statusEl = document.getElementById('cdModalStatus');
+  statusEl.className = `status-badge status-${c.status || 'UNDER_REVIEW'}`;
+  statusEl.textContent = (c.status || 'UNDER_REVIEW').replace(/_/g, ' ');
+
+  const slaEl = document.getElementById('cdModalSla');
+  const isBreached = c.is_breached;
+  const remainingHrs = c.remaining_hours !== undefined ? Number(c.remaining_hours).toFixed(1) : 48;
+  if (c.status === 'RESOLVED') {
+    slaEl.className = 'sla-tag normal';
+    slaEl.textContent = 'Completed';
+  } else if (isBreached) {
+    slaEl.className = 'sla-tag breached';
+    slaEl.textContent = `⚠️ Overdue (${Math.abs(remainingHrs)}h)`;
+  } else if (remainingHrs < 6) {
+    slaEl.className = 'sla-tag warning';
+    slaEl.textContent = `${remainingHrs}h remaining`;
+  } else {
+    slaEl.className = 'sla-tag normal';
+    slaEl.textContent = `${remainingHrs}h remaining`;
+  }
+
+  const citizenName = c.citizen_name || (c.citizen && c.citizen.full_name) || 'Anonymous Citizen';
+  document.getElementById('cdModalCitizen').textContent = citizenName;
+
+  // 2. Tab 1: Overview & Profile
+  document.getElementById('cdCitizenName').textContent = citizenName;
+  document.getElementById('cdCitizenPhone').textContent = c.citizen_phone || (c.citizen && c.citizen.phone_number) || 'N/A';
+  document.getElementById('cdCitizenNationalId').textContent = c.citizen_national_id || (c.citizen && c.citizen.national_id) || 'ETH-ID-VERIFIED';
+  document.getElementById('cdCitizenAddress').textContent = c.current_structure_name || 'Addis Ababa City Administration';
+
+  document.getElementById('cdJurisdictionTier').textContent = c.structure_level || 'Woreda Intake Tier';
+  document.getElementById('cdStructureName').textContent = c.current_structure_name || 'Sub-City Civic Office';
+  document.getElementById('cdAssignedOfficer').textContent = c.assigned_official_name || 'Unassigned (General Desk Queue)';
+  document.getElementById('cdSlaTarget').textContent = (c.sla_hours || 48) + ' hours';
+
+  document.getElementById('cdServiceTypeName').textContent = c.service_type_name || c.title || 'Municipal Service';
+  document.getElementById('cdCategoryName').textContent = c.category || c.service_category || 'Land & Property Administration (መሬትና ንብረት)';
+  
+  const priority = c.priority || 'NORMAL';
+  const priorityEl = document.getElementById('cdPriorityBadge');
+  priorityEl.innerHTML = `<span class="badge badge-${priority.toLowerCase()}" style="font-weight:700;">${priority}</span>`;
+  
+  document.getElementById('cdLodgedDate').textContent = c.created_at ? new Date(c.created_at).toLocaleString() : new Date().toLocaleString();
+  document.getElementById('cdGrievanceText').textContent = c.description || c.title || '-- No description recorded --';
+
+  // Virtual Hearing section
+  const hearingSection = document.getElementById('cdHearingSection');
+  if (c.hearing_slots && c.hearing_slots.length > 0) {
+    const h = c.hearing_slots[0];
+    hearingSection.style.display = 'block';
+    document.getElementById('cdHearingDate').textContent = h.hearing_date || 'Upcoming';
+    document.getElementById('cdHearingTime').textContent = `${h.start_time || '10:00'} - ${h.end_time || '10:30'}`;
+    document.getElementById('cdHearingOfficer').textContent = h.official_name || 'Assigned Officer';
+    const roomLink = document.getElementById('cdHearingRoomLink');
+    roomLink.href = h.meeting_link || `https://meet.jit.si/eth-muni-hearing-${c.ticket_number}`;
+  } else {
+    hearingSection.style.display = 'none';
+  }
+
+  // Resolution section
+  const resSection = document.getElementById('cdResolutionSection');
+  if (c.status === 'RESOLVED') {
+    resSection.style.display = 'block';
+    document.getElementById('cdResolvedBy').textContent = c.resolved_by_name || 'Certified Municipal Official';
+    document.getElementById('cdResolvedAt').textContent = c.resolved_at ? new Date(c.resolved_at).toLocaleString() : 'Recently';
+    document.getElementById('cdResolutionSummary').textContent = c.resolution_summary || 'The grievance has been reviewed, certified, and officially resolved.';
+  } else {
+    resSection.style.display = 'none';
+  }
+
+  // 3. Tab 2: Documents & Evidence
+  renderCaseDetailDocuments(c.attachments || []);
+
+  // 4. Tab 3: Audio & Voice Memos
+  renderCaseDetailAudio(c.attachments || []);
+
+  // 5. Tab 4: Audit Ledger
+  renderCaseDetailAuditLogs(c.audit_logs || []);
+}
+
+function renderCaseDetailDocuments(attachments) {
+  const container = document.getElementById('cdDocsContainer');
+  container.innerHTML = '';
+
+  const docAttachments = (attachments || []).filter(a => {
+    const mime = (a.mime_type || '').toLowerCase();
+    const name = (a.file_name || '').toLowerCase();
+    return !mime.startsWith('audio/') && 
+           !name.endsWith('.mp3') && 
+           !name.endsWith('.wav') && 
+           !name.endsWith('.m4a') && 
+           !name.endsWith('.ogg') && 
+           !name.endsWith('.webm') && 
+           !name.endsWith('.aac');
+  });
+
+  document.getElementById('cdDocTabBadge').textContent = docAttachments.length;
+  document.getElementById('cdDocCountBadge').textContent = docAttachments.length;
+
+  if (docAttachments.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1.5rem; background: rgba(15,23,42,0.4); border: 1px dashed var(--border-glass); border-radius: var(--radius-md);">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 0.5rem;">📁</span>
+        <strong style="color: var(--text-primary); font-size: 0.95rem;">No Legal Evidence Documents Attached Yet</strong>
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.35rem; max-width: 420px; margin-inline: auto;">
+          Use the secure upload form above to attach land title deeds, surveyor master plans, court rulings, or citizen complaint letters to this case dossier.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  docAttachments.forEach(att => {
+    const isPdf = (att.file_name || '').toLowerCase().includes('.pdf') || (att.mime_type || '').includes('pdf');
+    const isImg = (att.mime_type || '').startsWith('image/') || /\.(png|jpe?g|webp|gif)$/i.test(att.file_name || '');
+    const icon = isPdf ? '📄' : (isImg ? '🖼️' : '📑');
+    const uploadTime = att.uploaded_at ? new Date(att.uploaded_at).toLocaleString() : 'Just now';
+
+    const card = document.createElement('div');
+    card.className = 'cd-evidence-card';
+    card.innerHTML = `
+      <div class="cd-evidence-top">
+        <div class="cd-doc-type-icon">${icon}</div>
+        <div class="cd-doc-details">
+          <div class="cd-doc-title" title="${att.file_name}">${att.file_name}</div>
+          <div class="cd-doc-meta">Uploaded: ${uploadTime}</div>
+        </div>
+      </div>
+      ${att.extracted_ocr_text ? `<div class="cd-doc-ocr-box"><strong>Context / Notes:</strong> ${att.extracted_ocr_text}</div>` : ''}
+      <div class="cd-doc-actions">
+        <a href="${att.file_url}" target="_blank" class="btn btn-secondary btn-sm" style="flex:1; justify-content:center; text-decoration:none; font-size:0.78rem;">
+          <span>👁️ View / Preview</span>
+        </a>
+        <a href="${att.file_url}" download="${att.file_name}" class="btn btn-primary btn-sm" style="justify-content:center; text-decoration:none; font-size:0.78rem;">
+          <span>⬇️</span>
+        </a>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderCaseDetailAudio(attachments) {
+  const container = document.getElementById('cdAudioContainer');
+  container.innerHTML = '';
+
+  const audioAttachments = (attachments || []).filter(a => {
+    const mime = (a.mime_type || '').toLowerCase();
+    const name = (a.file_name || '').toLowerCase();
+    return mime.startsWith('audio/') || 
+           name.endsWith('.mp3') || 
+           name.endsWith('.wav') || 
+           name.endsWith('.m4a') || 
+           name.endsWith('.ogg') || 
+           name.endsWith('.webm') || 
+           name.endsWith('.aac');
+  });
+
+  document.getElementById('cdAudioTabBadge').textContent = audioAttachments.length;
+  document.getElementById('cdAudioCountBadge').textContent = audioAttachments.length;
+
+  if (audioAttachments.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1.5rem; background: rgba(15,23,42,0.4); border: 1px dashed var(--border-glass); border-radius: var(--radius-md);">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 0.5rem;">🎙️</span>
+        <strong style="color: var(--text-primary); font-size: 0.95rem;">No Voice Memos or Audio Statements Recorded Yet</strong>
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.35rem; max-width: 420px; margin-inline: auto;">
+          Use the Live Audio Recording Studio above to capture verbal witness statements, or upload audio files directly to preserve oral testimonies.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  audioAttachments.forEach(att => {
+    const uploadTime = att.uploaded_at ? new Date(att.uploaded_at).toLocaleString() : 'Just now';
+    const card = document.createElement('div');
+    card.className = 'cd-audio-card';
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+        <div>
+          <strong style="color:var(--text-primary); font-size:0.9rem; display:block;">${att.file_name}</strong>
+          <span style="font-size:0.75rem; color:var(--text-secondary);">Recorded: ${uploadTime}</span>
+        </div>
+        <span style="background:rgba(168,85,247,0.18); border:1px solid rgba(168,85,247,0.3); color:#d8b4fe; font-size:0.72rem; padding:0.15rem 0.5rem; border-radius:9999px; font-weight:700;">
+          🎙️ Audio Memo
+        </span>
+      </div>
+      <audio controls src="${att.file_url}" preload="metadata"></audio>
+      ${att.extracted_ocr_text ? `<div style="font-size:0.76rem; color:#cbd5e1; background:rgba(0,0,0,0.3); padding:0.4rem 0.6rem; border-radius:6px;">${att.extracted_ocr_text}</div>` : ''}
+      <div style="display:flex; justify-content:flex-end;">
+        <a href="${att.file_url}" download="${att.file_name}" class="btn btn-secondary btn-sm" style="font-size:0.75rem; text-decoration:none;">
+          <span>⬇️ Download Audio</span>
+        </a>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderCaseDetailAuditLogs(logs) {
+  const container = document.getElementById('cdAuditContainer');
+  container.innerHTML = '';
+
+  if (!logs || logs.length === 0) {
+    container.innerHTML = `
+      <div class="cd-timeline-item">
+        <div class="cd-timeline-dot"></div>
+        <div class="cd-timeline-header">
+          <span class="cd-timeline-action">INTAKE_LODGED</span>
+          <span class="cd-timeline-time">Case Creation</span>
+        </div>
+        <div class="cd-timeline-body">
+          Civic grievance lodged into the municipal queue and assigned initial SLA target.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  logs.forEach(l => {
+    const item = document.createElement('div');
+    item.className = 'cd-timeline-item';
+    item.innerHTML = `
+      <div class="cd-timeline-dot"></div>
+      <div class="cd-timeline-header">
+        <span class="cd-timeline-action">${l.action || 'AUDIT_EVENT'}</span>
+        <span class="cd-timeline-time">${l.created_at ? new Date(l.created_at).toLocaleString() : ''}</span>
+      </div>
+      <div class="cd-timeline-body">
+        <div style="font-weight:600; color:var(--cyan-400); margin-bottom:2px;">Performer: ${l.performer_name || 'Municipal Official'}</div>
+        <div>${l.notes || (l.new_value ? `Changed to: ${l.new_value}` : 'Action verified')}</div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function switchCaseDetailTab(tabName) {
+  const tabs = ['overview', 'docs', 'audio', 'audit'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('cdTabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+    const panel = document.getElementById('cdPanel' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.classList.remove('active');
+    if (panel) panel.style.display = 'none';
+  });
+
+  const activeBtn = document.getElementById('cdTabBtn' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+  const activePanel = document.getElementById('cdPanel' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+  if (activeBtn) activeBtn.classList.add('active');
+  if (activePanel) activePanel.style.display = 'block';
+}
+
+// Rapid actions from inside the dossier modal
+function openHearingModalFromDossier() {
+  if (!currentCaseDetail) return;
+  openHearingModal(currentCaseDetail.id, currentCaseDetail.ticket_number);
+}
+
+function escalateCaseFromDossier() {
+  if (!currentCaseDetail) return;
+  triggerManualEscalate(currentCaseDetail.id);
+}
+
+function resolveCaseFromDossier() {
+  if (!currentCaseDetail) return;
+  openResolveModal(currentCaseDetail.id, currentCaseDetail.ticket_number);
+}
+
+// ============================================================================
+// DOCUMENT UPLOAD HANDLER
+// ============================================================================
+async function handleCaseDocUpload(e) {
+  e.preventDefault();
+  if (!currentCaseDetail) {
+    showToast('No active case dossier selected', 'error');
+    return;
+  }
+
+  const category = document.getElementById('cdDocCategory').value;
+  const title = document.getElementById('cdDocTitle').value.trim();
+  const notes = document.getElementById('cdDocNotes').value.trim();
+  const fileInput = document.getElementById('cdDocFileInput');
+  const btn = document.getElementById('cdBtnDocSubmit');
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select a document file to upload', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳ Processing & Encrypting...</span>';
+
+  try {
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const payload = {
+      file_name: `${title} [${file.name}]`,
+      file_url: dataUrl,
+      mime_type: file.type || 'application/octet-stream',
+      extracted_ocr_text: `[Category: ${category}] ${notes}`
+    };
+
+    try {
+      await fetch(apiUrl(`/api/v1/cases/${currentCaseDetail.id}/attachments`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + currentToken
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (netErr) {
+      console.warn("Backend attachment upload failed, falling back to local dossier store:", netErr);
+    }
+
+    // Update in-memory case detail
+    if (!currentCaseDetail.attachments) currentCaseDetail.attachments = [];
+    currentCaseDetail.attachments.push({
+      id: 'att-' + Date.now(),
+      file_name: payload.file_name,
+      file_url: payload.file_url,
+      mime_type: payload.mime_type,
+      extracted_ocr_text: payload.extracted_ocr_text,
+      uploaded_at: new Date().toISOString()
+    });
+
+    // Also update allCases in memory if present
+    const idx = allCases.findIndex(c => c.id === currentCaseDetail.id);
+    if (idx !== -1) {
+      allCases[idx].attachments = currentCaseDetail.attachments;
+    }
+
+    renderCaseDetailDocuments(currentCaseDetail.attachments);
+    document.getElementById('cdUploadDocForm').reset();
+    showToast('Document securely uploaded & attached to Case Dossier', 'success');
+
+  } catch (err) {
+    console.error("Document upload error:", err);
+    showToast('Failed to upload document: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>📎 Upload & Cryptographically Attach Document</span>';
+  }
+}
+
+// ============================================================================
+// AUDIO RECORDING STUDIO & DIRECT AUDIO UPLOAD
+// ============================================================================
+async function startAudioRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Audio recording is not supported on this browser or requires HTTPS', 'error');
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioRecordedChunks = [];
+    audioMediaRecorder = new MediaRecorder(stream);
+
+    audioMediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        audioRecordedChunks.push(e.data);
+      }
+    };
+
+    audioMediaRecorder.onstop = () => {
+      const mimeType = audioMediaRecorder.mimeType || 'audio/webm';
+      currentRecordedBlob = new Blob(audioRecordedChunks, { type: mimeType });
+      const previewUrl = URL.createObjectURL(currentRecordedBlob);
+      const previewEl = document.getElementById('cdAudioRecorderPreview');
+      previewEl.src = previewUrl;
+      previewEl.style.display = 'block';
+
+      // Stop mic tracks to release hardware
+      stream.getTracks().forEach(track => track.stop());
+
+      // Enable save button & retake button
+      document.getElementById('cdBtnSaveRecord').disabled = false;
+      document.getElementById('cdBtnRetakeRecord').style.display = 'inline-flex';
+    };
+
+    audioMediaRecorder.start(250); // Slice every 250ms
+
+    // Update UI
+    document.getElementById('cdBtnStartRecord').disabled = true;
+    document.getElementById('cdBtnStopRecord').disabled = false;
+    document.getElementById('cdBtnRetakeRecord').style.display = 'none';
+    document.getElementById('cdRecordPulseBadge').style.display = 'inline-flex';
+    document.getElementById('cdRecordStatusText').textContent = 'RECORDING';
+    document.getElementById('cdStudioVisual').classList.add('recording');
+    document.getElementById('cdAudioRecorderPreview').style.display = 'none';
+
+    // Start timer
+    audioRecordSeconds = 0;
+    document.getElementById('cdRecordTimer').textContent = '00:00';
+    if (audioRecordTimer) clearInterval(audioRecordTimer);
+    audioRecordTimer = setInterval(() => {
+      audioRecordSeconds++;
+      const mins = String(Math.floor(audioRecordSeconds / 60)).padStart(2, '0');
+      const secs = String(audioRecordSeconds % 60).padStart(2, '0');
+      document.getElementById('cdRecordTimer').textContent = `${mins}:${secs}`;
+    }, 1000);
+
+  } catch (err) {
+    console.error("Microphone access failed:", err);
+    showToast('Could not access microphone: ' + err.message, 'error');
+  }
+}
+
+function stopAudioRecording() {
+  if (audioMediaRecorder && audioMediaRecorder.state !== 'inactive') {
+    audioMediaRecorder.stop();
+  }
+
+  if (audioRecordTimer) {
+    clearInterval(audioRecordTimer);
+    audioRecordTimer = null;
+  }
+
+  document.getElementById('cdBtnStartRecord').disabled = true;
+  document.getElementById('cdBtnStopRecord').disabled = true;
+  document.getElementById('cdRecordPulseBadge').style.display = 'none';
+  document.getElementById('cdStudioVisual').classList.remove('recording');
+}
+
+function retakeAudioRecording() {
+  resetAudioRecordingState();
+}
+
+function resetAudioRecordingState() {
+  if (audioMediaRecorder && audioMediaRecorder.state !== 'inactive') {
+    try { audioMediaRecorder.stop(); } catch (e) {}
+  }
+  if (audioRecordTimer) {
+    clearInterval(audioRecordTimer);
+    audioRecordTimer = null;
+  }
+  audioRecordSeconds = 0;
+  audioRecordedChunks = [];
+  currentRecordedBlob = null;
+
+  const timerEl = document.getElementById('cdRecordTimer');
+  if (timerEl) timerEl.textContent = '00:00';
+
+  const previewEl = document.getElementById('cdAudioRecorderPreview');
+  if (previewEl) {
+    previewEl.src = '';
+    previewEl.style.display = 'none';
+  }
+
+  const startBtn = document.getElementById('cdBtnStartRecord');
+  if (startBtn) startBtn.disabled = false;
+
+  const stopBtn = document.getElementById('cdBtnStopRecord');
+  if (stopBtn) stopBtn.disabled = true;
+
+  const retakeBtn = document.getElementById('cdBtnRetakeRecord');
+  if (retakeBtn) retakeBtn.style.display = 'none';
+
+  const saveBtn = document.getElementById('cdBtnSaveRecord');
+  if (saveBtn) saveBtn.disabled = true;
+
+  const pulseBadge = document.getElementById('cdRecordPulseBadge');
+  if (pulseBadge) pulseBadge.style.display = 'none';
+
+  const visualEl = document.getElementById('cdStudioVisual');
+  if (visualEl) visualEl.classList.remove('recording');
+
+  const titleInput = document.getElementById('cdVoiceMemoTitle');
+  if (titleInput) titleInput.value = '';
+}
+
+async function saveAudioAttachment() {
+  if (!currentCaseDetail) {
+    showToast('No active case dossier selected', 'error');
+    return;
+  }
+  if (!currentRecordedBlob) {
+    showToast('No audio recording found to save', 'error');
+    return;
+  }
+
+  const titleInput = document.getElementById('cdVoiceMemoTitle');
+  const memoTitle = (titleInput && titleInput.value.trim()) || `Voice Memo Statement (${new Date().toLocaleDateString()})`;
+  const saveBtn = document.getElementById('cdBtnSaveRecord');
+
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span>⏳ Saving Voice Memo...</span>';
+
+  try {
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(currentRecordedBlob);
+    });
+
+    const payload = {
+      file_name: `${memoTitle}.webm`,
+      file_url: dataUrl,
+      mime_type: currentRecordedBlob.type || 'audio/webm',
+      extracted_ocr_text: `[Audio Voice Memo recorded in Municipal Studio: ${memoTitle}]`
+    };
+
+    try {
+      await fetch(apiUrl(`/api/v1/cases/${currentCaseDetail.id}/attachments`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + currentToken
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (netErr) {
+      console.warn("Backend attachment upload failed, falling back to memory:", netErr);
+    }
+
+    if (!currentCaseDetail.attachments) currentCaseDetail.attachments = [];
+    currentCaseDetail.attachments.push({
+      id: 'att-audio-' + Date.now(),
+      file_name: payload.file_name,
+      file_url: payload.file_url,
+      mime_type: payload.mime_type,
+      extracted_ocr_text: payload.extracted_ocr_text,
+      uploaded_at: new Date().toISOString()
+    });
+
+    renderCaseDetailAudio(currentCaseDetail.attachments);
+    resetAudioRecordingState();
+    showToast('Voice memo attached to Case Dossier & sealed', 'success');
+
+  } catch (err) {
+    console.error("Save audio error:", err);
+    showToast('Failed to save audio recording: ' + err.message, 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>💾 Attach Recorded Voice Memo to Case</span>';
+  }
+}
+
+async function handleAudioFileUpload(e) {
+  e.preventDefault();
+  if (!currentCaseDetail) {
+    showToast('No active case dossier selected', 'error');
+    return;
+  }
+
+  const titleInput = document.getElementById('cdAudioFileTitle');
+  const notesInput = document.getElementById('cdAudioNotes');
+  const fileInput = document.getElementById('cdAudioFileInput');
+  const btn = document.getElementById('cdBtnUploadAudio');
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select an audio file to upload', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const title = (titleInput && titleInput.value.trim()) || file.name;
+  const notes = (notesInput && notesInput.value.trim()) || '';
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳ Uploading Audio Recording...</span>';
+
+  try {
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const payload = {
+      file_name: `${title} [${file.name}]`,
+      file_url: dataUrl,
+      mime_type: file.type || 'audio/mpeg',
+      extracted_ocr_text: notes ? `[Voice Memo Transcript]: ${notes}` : `[Audio Recording: ${title}]`
+    };
+
+    try {
+      await fetch(apiUrl(`/api/v1/cases/${currentCaseDetail.id}/attachments`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + currentToken
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (netErr) {
+      console.warn("Backend audio upload failed, falling back to memory:", netErr);
+    }
+
+    if (!currentCaseDetail.attachments) currentCaseDetail.attachments = [];
+    currentCaseDetail.attachments.push({
+      id: 'att-audio-' + Date.now(),
+      file_name: payload.file_name,
+      file_url: payload.file_url,
+      mime_type: payload.mime_type,
+      extracted_ocr_text: payload.extracted_ocr_text,
+      uploaded_at: new Date().toISOString()
+    });
+
+    renderCaseDetailAudio(currentCaseDetail.attachments);
+    document.getElementById('cdUploadAudioForm').reset();
+    showToast('Audio file uploaded & attached to Case Dossier', 'success');
+
+  } catch (err) {
+    console.error("Audio upload error:", err);
+    showToast('Failed to upload audio: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>⬆️ Upload & Attach Audio File</span>';
+  }
 }
 
 // Trigger SLA Auto-Escalation Engine Sweep

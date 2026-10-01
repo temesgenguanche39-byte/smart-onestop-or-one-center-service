@@ -92,6 +92,7 @@ func SetupRouter(rc *RouterConfig) *gin.Engine {
 			authorized.GET("/cases", rc.CaseHandler.ListCases)
 			authorized.GET("/cases/:id", rc.CaseHandler.GetByID)
 			authorized.POST("/cases/:id/assign", rc.CaseHandler.AssignCase)
+			authorized.POST("/cases/:id/attachments", rc.CaseHandler.AddAttachment)
 
 			// Resolution (Woreda Officer, Sub-City Manager, City Director, Super Admin)
 			authorized.POST("/cases/:id/resolve",
