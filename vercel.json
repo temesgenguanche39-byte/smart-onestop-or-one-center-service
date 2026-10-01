@@ -26,6 +26,10 @@
     {
       "source": "/healthz",
       "destination": "/healthz.json"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "https://sixty-bats-shout.loca.lt/api/$1"
     }
   ]
 }
