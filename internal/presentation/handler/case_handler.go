@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -39,10 +40,18 @@ func (h *CaseHandler) CreateCase(c *gin.Context) {
 
 // GetByTicket public tracking
 func (h *CaseHandler) GetByTicket(c *gin.Context) {
-	ticket := c.Param("ticket")
+	ticket := strings.TrimSpace(c.Param("ticket"))
 	if ticket == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ticket number is required"})
 		return
+	}
+
+	if strings.HasPrefix(ticket, "ETH-MUNI-") {
+		resp, err := h.caseService.GetByQR(c.Request.Context(), ticket)
+		if err == nil {
+			c.JSON(http.StatusOK, resp)
+			return
+		}
 	}
 
 	resp, err := h.caseService.GetByTicket(c.Request.Context(), ticket)
@@ -56,13 +65,18 @@ func (h *CaseHandler) GetByTicket(c *gin.Context) {
 
 // VerifyQR public cryptographic verification
 func (h *CaseHandler) VerifyQR(c *gin.Context) {
-	qrCode := c.Param("qr")
+	qrCode := strings.TrimSpace(c.Param("qr"))
 	if qrCode == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "QR verification code is required"})
 		return
 	}
 
 	resp, err := h.caseService.GetByQR(c.Request.Context(), qrCode)
+	if err != nil {
+		if strings.HasPrefix(qrCode, "TKT-") {
+			resp, err = h.caseService.GetByTicket(c.Request.Context(), qrCode)
+		}
+	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid or unverified QR code"})
 		return
