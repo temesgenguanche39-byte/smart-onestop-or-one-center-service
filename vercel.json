@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "smart-onestop-municipal-platform",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/static/(.*)",
+      "destination": "/web/static/$1"
+    },
+    {
+      "source": "/",
+      "destination": "/web/static/index.html"
+    },
+    {
+      "source": "/css/(.*)",
+      "destination": "/web/static/css/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/web/static/js/$1"
+    }
+  ]
+}

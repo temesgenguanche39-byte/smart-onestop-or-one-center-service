@@ -1,0 +1,479 @@
+openapi: 3.0.3
+info:
+  title: Smart One-Stop Digital Hearing & Automated Escalation Platform API
+  description: >
+    Production-grade enterprise backend implemented in Go (Golang) following Clean Architecture & DDD.
+    Digitizes municipal dispute resolution across Woreda, Sub-City, and City Administration tiers.
+    Features deterministic SLA countdowns, race-condition-free auto-escalation (SELECT FOR UPDATE SKIP LOCKED),
+    Wednesday/Friday virtual hearing desks, and cryptographic verification via digital signatures and QR codes.
+  version: 1.0.0
+  contact:
+    name: Addis Ababa City Administration - Digital Transformation Directorate
+    email: support@smartonestop.gov.et
+
+servers:
+  - url: http://localhost:8080
+    description: Local Development & Demonstration Server
+  - url: https://api.smartonestop.gov.et
+    description: Municipal Production Edge Gateway
+
+paths:
+  /healthz:
+    get:
+      summary: Service Health Check
+      tags: [System]
+      responses:
+        '200':
+          description: System is healthy and operational
+          content:
+            application/json:
+              example:
+                status: HEALTHY
+                service: smart-onestop-platform
+                environment: development
+
+  /api/v1/structures/tree:
+    get:
+      summary: Municipal Hierarchy Tree
+      description: Returns the full 3-tier municipal administrative tree (City -> Sub-Cities -> Woredas).
+      tags: [Administrative Hierarchy]
+      responses:
+        '200':
+          description: Hierarchical administrative tree
+
+  /api/v1/service-types:
+    get:
+      summary: List Public Service Classifications
+      description: Returns service categories along with mandatory base SLA response hours.
+      tags: [Public Services]
+      responses:
+        '200':
+          description: List of service types with SLA targets
+
+  /api/v1/cases:
+    post:
+      summary: Citizen Grievance Intake
+      description: Public endpoint for citizens to submit grievances, voice memos, and supporting documents.
+      tags: [Citizen Intake & Cases]
+      parameters:
+        - in: header
+          name: X-Idempotency-Key
+          schema:
+            type: string
+          description: Unique idempotency key to prevent double submissions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCaseRequest'
+      responses:
+        '201':
+          description: Case successfully registered with certified ticket and QR code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+
+    get:
+      summary: Staff Case Review Queue
+      description: Filterable list of cases by municipal structure, status, and SLA breach condition.
+      tags: [Citizen Intake & Cases]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: structure_id
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: only_breached
+          schema:
+            type: boolean
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated case queue
+
+  /api/v1/cases/ticket/{ticket}:
+    get:
+      summary: Public Citizen Tracking by Ticket Number
+      tags: [Citizen Intake & Cases]
+      parameters:
+        - in: path
+          name: ticket
+          required: true
+          schema:
+            type: string
+          example: TKT-2026-100234
+      responses:
+        '200':
+          description: Full case lifecycle, timeline, SLA countdown, and audit history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseDetailResponse'
+        '404':
+          description: Ticket not found
+
+  /api/v1/cases/verify/{qr}:
+    get:
+      summary: Public QR Cryptographic Verification
+      tags: [Citizen Intake & Cases]
+      parameters:
+        - in: path
+          name: qr
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authenticated case details matching QR payload
+
+  /api/v1/cases/{id}/assign:
+    post:
+      summary: Assign Ticket to Municipal Officer
+      tags: [Case Management]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assigned_to_user_id]
+              properties:
+                assigned_to_user_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Case assigned successfully
+
+  /api/v1/cases/{id}/resolve:
+    post:
+      summary: Officially Resolve Case & Issue Certified Directives
+      tags: [Case Management]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveCaseRequest'
+      responses:
+        '200':
+          description: Decision signed off and logged in immutable ledger
+
+  /api/v1/cases/{id}/escalate:
+    post:
+      summary: Manually Escalate Case to Higher Administrative Tier
+      tags: [Case Management]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Case transitioned to superior municipal tier
+
+  /api/v1/cases/{id}/hearings:
+    post:
+      summary: Schedule Digital Hearing Slot (Wednesday & Friday Desks)
+      description: Validates that hearing falls strictly on Wednesday or Friday per municipal regulation.
+      tags: [Digital Hearings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleHearingRequest'
+      responses:
+        '201':
+          description: Virtual hearing room created and meeting invitation dispatched
+
+  /api/v1/hearings/date/{date}:
+    get:
+      summary: List Presiding Hearings for Specific Date
+      tags: [Digital Hearings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-10-07"
+      responses:
+        '200':
+          description: List of scheduled hearings for the day
+
+  /api/v1/analytics/dashboard:
+    get:
+      summary: Executive Analytics & Bottleneck Heatmap
+      tags: [Analytics & Audit]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cross-tier bottleneck heatmap, resolution velocity, and breach metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummaryResponse'
+
+  /api/v1/sla/trigger-sweep:
+    post:
+      summary: Trigger SLA Automated Escalation Sweep (On-Demand)
+      tags: [Analytics & Audit]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Number of breached cases auto-escalated across municipal tiers
+
+  /api/v1/auth/login:
+    post:
+      summary: Municipal Staff Authentication
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: JWT token and user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateCaseRequest:
+      type: object
+      required:
+        - citizen_full_name
+        - citizen_phone
+        - woreda_id
+        - service_type_id
+        - title
+        - description
+      properties:
+        citizen_full_name:
+          type: string
+          example: Tewodros Assefa
+        citizen_phone:
+          type: string
+          example: "+251912345678"
+        citizen_national_id:
+          type: string
+          example: ETH-NAT-883492
+        citizen_house_number:
+          type: string
+          example: "142/B"
+        woreda_id:
+          type: integer
+          example: 4
+        service_type_id:
+          type: integer
+          example: 1
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, URGENT]
+          default: NORMAL
+        title:
+          type: string
+          example: Boundary Wall and Land Survey Discrepancy
+        description:
+          type: string
+          example: Woreda survey department hasn't finalized boundary inspection after 3 visits.
+
+    CaseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_number:
+          type: string
+          example: TKT-2026-100234
+        citizen_name:
+          type: string
+        citizen_phone:
+          type: string
+        service_type_name:
+          type: string
+        current_structure_name:
+          type: string
+        structure_level:
+          type: string
+          enum: [CITY, SUB_CITY, WOREDA]
+        status:
+          type: string
+          enum: [SUBMITTED, UNDER_REVIEW, SCHEDULED_FOR_HEARING, RESOLVED, REJECTED, ESCALATED_TO_SUBCITY, ESCALATED_TO_CITY]
+        priority:
+          type: string
+        sla_deadline:
+          type: string
+          format: date-time
+        remaining_hours:
+          type: number
+        is_breached:
+          type: boolean
+        is_escalated:
+          type: boolean
+        escalation_count:
+          type: integer
+        qr_verification_code:
+          type: string
+
+    CaseDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/CaseResponse'
+        - type: object
+          properties:
+            description:
+              type: string
+            resolution_summary:
+              type: string
+            resolved_by_name:
+              type: string
+            resolved_at:
+              type: string
+              format: date-time
+
+    ResolveCaseRequest:
+      type: object
+      required: [resolution_summary]
+      properties:
+        resolution_summary:
+          type: string
+          example: "Woreda cadastral map reconciled; boundary coordinates restored to original certificate."
+        decision_notes:
+          type: string
+        send_notification:
+          type: boolean
+          default: true
+
+    ScheduleHearingRequest:
+      type: object
+      required: [hearing_date, start_time, end_time]
+      properties:
+        hearing_date:
+          type: string
+          format: date
+          example: "2026-10-07"
+        start_time:
+          type: string
+          example: "10:00"
+        end_time:
+          type: string
+          example: "10:30"
+        meeting_link:
+          type: string
+          example: "https://meet.jit.si/eth-muni-hearing-TKT-2026-100891"
+        notes:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: woreda01.officer@smartonestop.gov.et
+        password:
+          type: string
+          example: Password123!
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    AnalyticsSummaryResponse:
+      type: object
+      properties:
+        total_cases:
+          type: integer
+        active_cases:
+          type: integer
+        resolved_cases:
+          type: integer
+        breached_cases:
+          type: integer
+        escalated_to_subcity:
+          type: integer
+        escalated_to_city:
+          type: integer
+        avg_resolution_hours:
+          type: number

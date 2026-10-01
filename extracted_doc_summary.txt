@@ -1,0 +1,1002 @@
+0: Here is the complete, professional English version of the comprehensive system architecture, concept note, database specification, and software implementation prompt:
+1: SYSTEM SPECIFICATION & IMPLEMENTATION PROMPT
+2: Project Title
+3: Smart One-Stop Digital Citizen Hearing & Automated Escalation Platform
+4: (A digitized system replacing physical queues, administrative dispute resolution, and public-official interactions across Woreda, Sub-City, and City municipal tiers)
+5: 1. Executive Summary & Core Objectives
+6: Executive Summary
+7: The conventional public service hearing protocol (typically held on designated days like Wednesday and Friday) suffers from severe physical queuing, cumbersome bureaucracy, lack of traceability, and human bottlenecks across hierarchical governance tiers (Woreda  Sub-City  City Administration).
+8: This platform completely replaces manual intake and dispute resolution with an end-to-end, automated, role-governed digital architecture. It integrates multi-channel citizen input, automated Service Level Agreement (SLA) timers, rules-based hierarchical escalation, virtual appointment rooms, and cryptographic verification via digital signatures and QR codes.
+9: Core Objectives
+10: Zero In-Person Bureaucracy: Enable citizens to submit grievances, voice notes, and supporting documents remotely via a Telegram Bot or Mobile Web Portal.
+11: Enforced Administrative Accountability: Apply strict, immutable SLA countdowns to cases. If an official fails to act within the mandated timeframe, the system automatically escalates the case to the next administrative echelon without human discretion.
+12: Digitized Direct Hearings: Replace physical attendance days with scheduled virtual hearings integrated with video conferencing, digital signature sign-offs, and instant PDF resolution dispatches.
+13: End-to-End Observability: Provide transparent public case tracking via ticket IDs/QR codes and an executive dashboard highlighting real-time administrative bottlenecks and response latencies.
+14: 2. End-to-End Architecture & Core Modules
+15: [Citizen: Telegram Bot / Mobile Web Portal]
+16: │
+17: ▼
+18: [Module 1: Omnichannel Intake & Verification]
+19: ├── Amharic / Multilingual Speech-to-Text
+20: ├── OCR & Vision Extraction (IDs, Certificates)
+21: └── Unique Ticket & Verification QR Generation
+22: │
+23: ▼
+24: [Module 2: Intelligent Routing & SLA Escalation Engine]
+25: │
+26: ┌────────────┴─────────────────────────────┐
+27: ▼                                          ▼
+28: [Woreda Level Action]                     [Direct Appeal / Higher Scope]
+29: ├── Woreda Dashboard (Active SLA Timer)   │
+30: ├── Resolved ──> Digital PDF / SMS        │
+31: └── SLA Breached (Unresolved)             │
+32: │                                  │
+33: └─────────────────┬────────────────┘
+34: ▼
+35: [Auto-Escalated to Sub-City Level]
+36: ├── Sub-City Manager Dashboard
+37: ├── Resolved ──> Digital PDF / SMS
+38: └── SLA Breached (Unresolved)
+39: │
+40: ▼
+41: [Auto-Escalated to City Administration]
+42: Module Breakdown
+43: Omnichannel Intake Layer:
+44: Accepts written text or voice notes (speech-to-text conversion).
+45: Document scanning via Optical Character Recognition (OCR) for national identification, vital event certificates, and supporting evidence.
+46: Generates unique tracking tickets sent via SMS or Telegram.
+47: Intelligent Escalation & SLA Engine:
+48: Evaluates case type against operational policies to route tickets to the correct administrative level.
+49: Background daemon monitors real-time SLA thresholds (e.g., 48 hours for initial woreda review).
+50: Triggers automated status transitions, sends breach alerts to superiors, and reassigns tickets upward upon SLA expiry.
+51: Virtual Hearing Desk (Wednesday/Friday Desks):
+52: Automated time-slot scheduling (e.g., 15-minute dedicated slots) distributed to citizens with direct meeting links.
+53: WebRTC/Jitsi video/audio conferencing.
+54: In-app resolution writer allowing officials to record instructions, sign digitally, and issue certified PDF documentation.
+55: Audit Trail & Executive Analytics:
+56: Real-time heatmaps identifying processing delays across administrative subdivisions.
+57: Append-only audit logs recording every timestamp, system event, state change, and official intervention.
+58: 3. Database Schema Specification (PostgreSQL DDL)
+59: SQL
+60: -- Custom Enums
+61: CREATE TYPE admin_level_enum AS ENUM ('CITY', 'SUB_CITY', 'WOREDA');
+62: CREATE TYPE user_role_enum AS ENUM (
+63: 'SUPER_ADMIN',
+64: 'CITY_DIRECTOR',
+65: 'SUBCITY_MANAGER',
+66: 'WOREDA_OFFICER',
+67: 'SERVICE_DESK_AGENT'
+68: );
+69: CREATE TYPE case_status_enum AS ENUM (
+70: 'SUBMITTED',
+71: 'UNDER_REVIEW',
+72: 'SCHEDULED_FOR_HEARING',
+73: 'RESOLVED',
+74: 'REJECTED',
+75: 'ESCALATED_TO_SUBCITY',
+76: 'ESCALATED_TO_CITY'
+77: );
+78: CREATE TYPE priority_enum AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT');
+79: CREATE TYPE hearing_type_enum AS ENUM ('IN_PERSON', 'VIRTUAL_CALL');
+80: CREATE TYPE hearing_status_enum AS ENUM (
+81: 'SCHEDULED',
+82: 'COMPLETED',
+83: 'MISSED_BY_CITIZEN',
+84: 'CANCELLED_BY_OFFICIAL'
+85: );
+87: -- 1. Administrative Hierarchy
+88: CREATE TABLE administrative_structures (
+89: id SERIAL PRIMARY KEY,
+90: name VARCHAR(100) NOT NULL,
+91: level admin_level_enum NOT NULL,
+92: parent_id INT REFERENCES administrative_structures(id) ON DELETE SET NULL,
+93: code VARCHAR(20) UNIQUE NOT NULL,
+94: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+95: );
+97: -- 2. System Users & Officials
+98: CREATE TABLE users (
+99: id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+100: full_name VARCHAR(150) NOT NULL,
+101: email VARCHAR(100) UNIQUE NOT NULL,
+102: phone_number VARCHAR(20) UNIQUE NOT NULL,
+103: password_hash VARCHAR(255) NOT NULL,
+104: role user_role_enum NOT NULL,
+105: structure_id INT REFERENCES administrative_structures(id),
+106: is_active BOOLEAN DEFAULT TRUE,
+107: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+108: );
+110: -- 3. Citizens
+111: CREATE TABLE citizens (
+112: id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+113: full_name VARCHAR(150) NOT NULL,
+114: phone_number VARCHAR(20) UNIQUE NOT NULL,
+115: national_id VARCHAR(50),
+116: telegram_chat_id BIGINT UNIQUE,
+117: woreda_id INT REFERENCES administrative_structures(id),
+118: house_number VARCHAR(50),
+119: preferred_language VARCHAR(10) DEFAULT 'am',
+120: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+121: );
+123: -- 4. Service Types & Base SLA Configurations
+124: CREATE TABLE service_types (
+125: id SERIAL PRIMARY KEY,
+126: name VARCHAR(100) NOT NULL,
+127: code VARCHAR(30) UNIQUE NOT NULL,
+128: base_sla_hours INT NOT NULL DEFAULT 48,
+129: requires_woreda_first BOOLEAN DEFAULT TRUE
+130: );
+132: -- 5. Cases / Tickets
+133: CREATE TABLE cases (
+134: id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+135: ticket_number VARCHAR(30) UNIQUE NOT NULL,
+136: citizen_id UUID NOT NULL REFERENCES citizens(id) ON DELETE RESTRICT,
+137: service_type_id INT NOT NULL REFERENCES service_types(id),
+138: current_structure_id INT NOT NULL REFERENCES administrative_structures(id),
+139: assigned_to_user_id UUID REFERENCES users(id),
+140: title VARCHAR(200) NOT NULL,
+141: description TEXT NOT NULL,
+142: status case_status_enum DEFAULT 'SUBMITTED',
+143: priority priority_enum DEFAULT 'NORMAL',
+144: sla_deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+145: is_escalated BOOLEAN DEFAULT FALSE,
+146: escalation_count INT DEFAULT 0,
+147: resolution_summary TEXT,
+148: resolved_by UUID REFERENCES users(id),
+149: resolved_at TIMESTAMP WITH TIME ZONE,
+150: qr_verification_code VARCHAR(100) UNIQUE,
+151: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+152: updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+153: );
+155: -- 6. Attachments & OCR Text
+156: CREATE TABLE case_attachments (
+157: id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+158: case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
+159: file_name VARCHAR(255) NOT NULL,
+160: file_url VARCHAR(500) NOT NULL,
+161: mime_type VARCHAR(50) NOT NULL,
+162: extracted_ocr_text TEXT,
+163: uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+164: );
+166: -- 7. Hearing Sessions (Wednesday / Friday Desks)
+167: CREATE TABLE hearing_slots (
+168: id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+169: case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
+170: official_id UUID NOT NULL REFERENCES users(id),
+171: hearing_date DATE NOT NULL,
+172: start_time TIME NOT NULL,
+173: end_time TIME NOT NULL,
+174: hearing_type hearing_type_enum DEFAULT 'VIRTUAL_CALL',
+175: meeting_link VARCHAR(300),
+176: status hearing_status_enum DEFAULT 'SCHEDULED',
+177: hearing_notes TEXT,
+178: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+179: CONSTRAINT check_wed_or_fri CHECK (EXTRACT(ISODOW FROM hearing_date) IN (3, 5))
+180: );
+182: -- 8. Escalation Rules
+183: CREATE TABLE escalation_policies (
+184: id SERIAL PRIMARY KEY,
+185: service_type_id INT REFERENCES service_types(id),
+186: from_level admin_level_enum NOT NULL,
+187: to_level admin_level_enum NOT NULL,
+188: max_resolution_hours INT NOT NULL,
+189: warning_threshold_hours INT NOT NULL,
+190: is_active BOOLEAN DEFAULT TRUE
+191: );
+193: -- 9. Immutable Audit Trails
+194: CREATE TABLE case_audit_logs (
+195: id BIGSERIAL PRIMARY KEY,
+196: case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
+197: performed_by UUID REFERENCES users(id),
+198: action VARCHAR(100) NOT NULL,
+199: old_value JSONB,
+200: new_value JSONB,
+201: notes TEXT,
+202: created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+203: );
+205: -- Indexes for Query Optimization
+206: CREATE INDEX idx_cases_ticket_number ON cases(ticket_number);
+207: CREATE INDEX idx_cases_qr_code ON cases(qr_verification_code);
+208: CREATE INDEX idx_cases_sla_escalation ON cases(status, sla_deadline) WHERE status NOT IN ('RESOLVED', 'REJECTED');
+209: CREATE INDEX idx_hearings_date ON hearing_slots(hearing_date, official_id);
+210: 4. Backend Implementation (FastAPI, SQLAlchemy & Background Escalation Engine)
+211: Core Backend & SLA Worker (main.py)
+212: Python
+213: import asyncio
+214: from datetime import datetime, timedelta, timezone
+215: from enum import Enum
+216: from typing import List, Optional
+217: import uuid
+219: from fastapi import FastAPI, Depends, HTTPException, status
+220: from pydantic import BaseModel, Field
+221: from sqlalchemy import (
+222: create_engine, Column, String, Integer, DateTime, Boolean,
+223: ForeignKey, Text, Enum as SQLEnum
+224: )
+225: from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
+227: DATABASE_URL = "sqlite:///./smart_onestop.db"
+229: engine = create_engine(
+230: DATABASE_URL,
+231: connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+232: )
+233: SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+234: Base = declarative_base()
+236: # Enums
+237: class AdminLevelEnum(str, Enum):
+238: CITY = "CITY"
+239: SUB_CITY = "SUB_CITY"
+240: WOREDA = "WOREDA"
+242: class CaseStatusEnum(str, Enum):
+243: SUBMITTED = "SUBMITTED"
+244: UNDER_REVIEW = "UNDER_REVIEW"
+245: SCHEDULED_FOR_HEARING = "SCHEDULED_FOR_HEARING"
+246: RESOLVED = "RESOLVED"
+247: REJECTED = "REJECTED"
+248: ESCALATED_TO_SUBCITY = "ESCALATED_TO_SUBCITY"
+249: ESCALATED_TO_CITY = "ESCALATED_TO_CITY"
+251: class PriorityEnum(str, Enum):
+252: LOW = "LOW"
+253: NORMAL = "NORMAL"
+254: HIGH = "HIGH"
+255: URGENT = "URGENT"
+257: # ORM Models
+258: class AdministrativeStructure(Base):
+259: __tablename__ = "administrative_structures"
+260: id = Column(Integer, primary_key=True, index=True)
+261: name = Column(String(100), nullable=False)
+262: level = Column(SQLEnum(AdminLevelEnum), nullable=False)
+263: parent_id = Column(Integer, ForeignKey("administrative_structures.id"), nullable=True)
+264: code = Column(String(20), unique=True, nullable=False)
+265: parent = relationship("AdministrativeStructure", remote_side=[id])
+267: class ServiceType(Base):
+268: __tablename__ = "service_types"
+269: id = Column(Integer, primary_key=True, index=True)
+270: name = Column(String(100), nullable=False)
+271: code = Column(String(30), unique=True, nullable=False)
+272: base_sla_hours = Column(Integer, default=48)
+274: class Citizen(Base):
+275: __tablename__ = "citizens"
+276: id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+277: full_name = Column(String(150), nullable=False)
+278: phone_number = Column(String(20), unique=True, nullable=False)
+279: national_id = Column(String(50), nullable=True)
+280: telegram_chat_id = Column(String(50), unique=True, nullable=True)
+281: woreda_id = Column(Integer, ForeignKey("administrative_structures.id"))
+283: class Case(Base):
+284: __tablename__ = "cases"
+285: id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+286: ticket_number = Column(String(30), unique=True, index=True, nullable=False)
+287: citizen_id = Column(String(36), ForeignKey("citizens.id"), nullable=False)
+288: service_type_id = Column(Integer, ForeignKey("service_types.id"), nullable=False)
+289: current_structure_id = Column(Integer, ForeignKey("administrative_structures.id"), nullable=False)
+290: title = Column(String(200), nullable=False)
+291: description = Column(Text, nullable=False)
+292: status = Column(SQLEnum(CaseStatusEnum), default=CaseStatusEnum.SUBMITTED, index=True)
+293: priority = Column(SQLEnum(PriorityEnum), default=PriorityEnum.NORMAL)
+294: sla_deadline = Column(DateTime, nullable=False, index=True)
+295: is_escalated = Column(Boolean, default=False)
+296: escalation_count = Column(Integer, default=0)
+297: resolution_summary = Column(Text, nullable=True)
+298: resolved_at = Column(DateTime, nullable=True)
+299: created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+301: class CaseAuditLog(Base):
+302: __tablename__ = "case_audit_logs"
+303: id = Column(Integer, primary_key=True, autoincrement=True)
+304: case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
+305: action = Column(String(100), nullable=False)
+306: old_value = Column(String(255), nullable=True)
+307: new_value = Column(String(255), nullable=True)
+308: notes = Column(Text, nullable=True)
+309: created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+311: Base.metadata.create_all(bind=engine)
+313: # Schemas
+314: class CaseCreateSchema(BaseModel):
+315: citizen_id: str
+316: service_type_id: int
+317: woreda_id: int
+318: title: str = Field(..., max_length=200)
+319: description: str
+320: priority: Optional[PriorityEnum] = PriorityEnum.NORMAL
+322: class CaseResponseSchema(BaseModel):
+323: id: str
+324: ticket_number: str
+325: citizen_id: str
+326: current_structure_id: int
+327: title: str
+328: status: CaseStatusEnum
+329: priority: PriorityEnum
+330: sla_deadline: datetime
+331: is_escalated: bool
+332: escalation_count: int
+333: created_at: datetime
+335: class Config:
+336: from_attributes = True
+338: class CaseResolveSchema(BaseModel):
+339: resolution_summary: str
+341: # Helpers & Database Session Dependency
+342: def get_db():
+343: db = SessionLocal()
+344: try:
+345: yield db
+346: finally:
+347: db.close()
+349: def generate_ticket_number() -> str:
+350: now_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+351: short_uuid = uuid.uuid4().hex[:6].upper()
+352: return f"TKT-{now_str}-{short_uuid}"
+354: # Automated SLA Escalation Engine
+355: def check_and_escalate_sla(db: Session):
+356: now = datetime.now(timezone.utc)
+357: active_breached_cases = db.query(Case).filter(
+358: Case.status.notin_([CaseStatusEnum.RESOLVED, CaseStatusEnum.REJECTED]),
+359: Case.sla_deadline <= now
+360: ).all()
+362: for case in active_breached_cases:
+363: current_structure = db.query(AdministrativeStructure).filter_by(id=case.current_structure_id).first()
+364: if not current_structure:
+365: continue
+367: previous_status = case.status
+368: previous_structure_name = current_structure.name
+370: # 1. Escalate from Woreda to Sub-City
+371: if current_structure.level == AdminLevelEnum.WOREDA and current_structure.parent_id:
+372: parent_subcity = db.query(AdministrativeStructure).filter_by(id=current_structure.parent_id).first()
+373: if parent_subcity:
+374: case.current_structure_id = parent_subcity.id
+375: case.status = CaseStatusEnum.ESCALATED_TO_SUBCITY
+376: case.is_escalated = True
+377: case.escalation_count += 1
+378: case.sla_deadline = now + timedelta(hours=24)
+380: audit_log = CaseAuditLog(
+381: case_id=case.id,
+382: action="AUTO_ESCALATED_SLA_BREACH",
+383: old_value=f"{previous_status} ({previous_structure_name})",
+384: new_value=f"{case.status} ({parent_subcity.name})",
+385: notes="Woreda SLA expired without resolution. Automatically escalated to Sub-City level."
+386: )
+387: db.add(audit_log)
+389: # 2. Escalate from Sub-City to City Administration
+390: elif current_structure.level == AdminLevelEnum.SUB_CITY and current_structure.parent_id:
+391: city_structure = db.query(AdministrativeStructure).filter_by(id=current_structure.parent_id).first()
+392: if city_structure:
+393: case.current_structure_id = city_structure.id
+394: case.status = CaseStatusEnum.ESCALATED_TO_CITY
+395: case.is_escalated = True
+396: case.escalation_count += 1
+397: case.sla_deadline = now + timedelta(hours=24)
+399: audit_log = CaseAuditLog(
+400: case_id=case.id,
+401: action="AUTO_ESCALATED_TO_CITY",
+402: old_value=f"{previous_status} ({previous_structure_name})",
+403: new_value=f"{case.status} ({city_structure.name})",
+404: notes="Sub-City SLA expired without resolution. Automatically escalated to City Administration."
+405: )
+406: db.add(audit_log)
+408: db.commit()
+410: async def background_sla_scheduler():
+411: while True:
+412: try:
+413: db = SessionLocal()
+414: check_and_escalate_sla(db)
+415: db.close()
+416: except Exception as e:
+417: print(f"[SLA Worker Error]: {e}")
+418: await asyncio.sleep(60)
+420: # FastAPI Application
+421: app = FastAPI(
+422: title="Smart One-Stop Hearing & Escalation API",
+423: description="Digitized citizen intake, automated SLA escalation, and direct virtual hearing system.",
+424: version="1.0.0"
+425: )
+427: @app.on_event("startup")
+428: async def startup_event():
+429: asyncio.create_task(background_sla_scheduler())
+431: @app.post("/api/v1/cases", response_model=CaseResponseSchema, status_code=status.HTTP_201_CREATED)
+432: def create_case(case_in: CaseCreateSchema, db: Session = Depends(get_db)):
+433: service = db.query(ServiceType).filter_by(id=case_in.service_type_id).first()
+434: if not service:
+435: raise HTTPException(status_code=404, detail="Requested service type not found")
+437: now = datetime.now(timezone.utc)
+438: sla_deadline = now + timedelta(hours=service.base_sla_hours)
+439: ticket_no = generate_ticket_number()
+441: new_case = Case(
+442: ticket_number=ticket_no,
+443: citizen_id=case_in.citizen_id,
+444: service_type_id=case_in.service_type_id,
+445: current_structure_id=case_in.woreda_id,
+446: title=case_in.title,
+447: description=case_in.description,
+448: priority=case_in.priority,
+449: sla_deadline=sla_deadline,
+450: status=CaseStatusEnum.SUBMITTED
+451: )
+452: db.add(new_case)
+453: db.flush()
+455: log = CaseAuditLog(
+456: case_id=new_case.id,
+457: action="CASE_CREATED",
+458: new_value=CaseStatusEnum.SUBMITTED,
+459: notes=f"New case registered with ticket {ticket_no}. Initial SLA: {service.base_sla_hours} hours."
+460: )
+461: db.add(log)
+462: db.commit()
+463: db.refresh(new_case)
+464: return new_case
+466: @app.get("/api/v1/cases/{ticket_number}", response_model=CaseResponseSchema)
+467: def get_case_status(ticket_number: str, db: Session = Depends(get_db)):
+468: case = db.query(Case).filter_by(ticket_number=ticket_number).first()
+469: if not case:
+470: raise HTTPException(status_code=404, detail="Case not found")
+471: return case
+473: @app.post("/api/v1/cases/{case_id}/resolve", response_model=CaseResponseSchema)
+474: def resolve_case(case_id: str, payload: CaseResolveSchema, db: Session = Depends(get_db)):
+475: case = db.query(Case).filter_by(id=case_id).first()
+476: if not case:
+477: raise HTTPException(status_code=404, detail="Case not found")
+479: case.status = CaseStatusEnum.RESOLVED
+480: case.resolution_summary = payload.resolution_summary
+481: case.resolved_at = datetime.now(timezone.utc)
+483: log = CaseAuditLog(
+484: case_id=case.id,
+485: action="CASE_RESOLVED",
+486: old_value=case.status,
+487: new_value=CaseStatusEnum.RESOLVED,
+488: notes=f"Case resolved with note: {payload.resolution_summary}"
+489: )
+490: db.add(log)
+491: db.commit()
+492: db.refresh(case)
+493: return case
+494: 5. Security & Role-Based Access Control (RBAC) Specification
+495: 1. Security Utilities (auth_utils.py)
+496: Python
+497: import os
+498: from datetime import datetime, timedelta, timezone
+499: from typing import Optional
+500: from jose import jwt
+501: from passlib.context import CryptContext
+503: SECRET_KEY = os.getenv("JWT_SECRET_KEY", "system-master-jwt-secret-key-production")
+504: ALGORITHM = "HS256"
+505: ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8  # 8 hours
+507: pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+509: def verify_password(plain_password: str, hashed_password: str) -> bool:
+510: return pwd_context.verify(plain_password, hashed_password)
+512: def hash_password(password: str) -> str:
+513: return pwd_context.hash(password)
+515: def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+516: to_encode = data.copy()
+517: expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+518: to_encode.update({"exp": expire})
+519: return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+520: 2. Parameterized RoleChecker Dependency (dependencies.py)
+521: Python
+522: from typing import List
+523: from uuid import UUID
+524: from fastapi import Depends, HTTPException, status
+525: from fastapi.security import OAuth2PasswordBearer
+526: from jose import JWTError, jwt
+527: from sqlalchemy.orm import Session
+529: from database import get_db
+530: from models import User, UserRole
+531: from auth_utils import SECRET_KEY, ALGORITHM
+533: oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+535: def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+536: credentials_exception = HTTPException(
+537: status_code=status.HTTP_401_UNAUTHORIZED,
+538: detail="Could not validate credentials or session expired.",
+539: headers={"WWW-Authenticate": "Bearer"},
+540: )
+541: try:
+542: payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+543: user_id: str = payload.get("sub")
+544: if user_id is None:
+545: raise credentials_exception
+546: except JWTError:
+547: raise credentials_exception
+549: user = db.query(User).filter(User.id == UUID(user_id)).first()
+550: if user is None:
+551: raise credentials_exception
+553: if not user.is_active:
+554: raise HTTPException(
+555: status_code=status.HTTP_403_FORBIDDEN,
+556: detail="Inactive user account."
+557: )
+559: return user
+561: class RoleChecker:
+562: """Reusable dependency to enforce role-based authorization across API endpoints."""
+563: def __init__(self, allowed_roles: List[UserRole]):
+564: self.allowed_roles = allowed_roles
+566: def __call__(self, current_user: User = Depends(get_current_user)) -> User:
+567: if current_user.role not in self.allowed_roles:
+568: raise HTTPException(
+569: status_code=status.HTTP_403_FORBIDDEN,
+570: detail=f"Operation not permitted. Required role: {[r.value for r in self.allowed_roles]}",
+571: )
+572: return current_user
+573: 3. Route Protection Example (routes/admin.py)
+574: Python
+575: from typing import List
+576: from uuid import UUID, uuid4
+577: from fastapi import APIRouter, Depends, HTTPException, status
+578: from sqlalchemy.orm import Session
+580: from database import get_db
+581: from models import User, UserRole
+582: from schemas import UserCreate, UserResponse
+583: from auth_utils import hash_password
+584: from dependencies import RoleChecker
+586: router = APIRouter(prefix="/admin/officials", tags=["Official Management"])
+587: require_super_admin = RoleChecker([UserRole.SUPER_ADMIN])
+589: @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+590: def create_official(payload: UserCreate, db: Session = Depends(get_db), admin_user: User = Depends(require_super_admin)):
+591: if db.query(User).filter(User.email == payload.email).first():
+592: raise HTTPException(status_code=400, detail="A user with this email already exists.")
+594: new_user = User(
+595: id=uuid4(),
+596: full_name=payload.full_name,
+597: email=payload.email,
+598: phone_number=payload.phone_number,
+599: password_hash=hash_password(payload.password),
+600: role=payload.role,
+601: structure_id=payload.structure_id,
+602: is_active=True
+603: )
+604: db.add(new_user)
+605: db.commit()
+606: db.refresh(new_user)
+607: return new_user
+623: Architectural Style & Design Principles
+624: An end-to-end, production-grade Software Engineering Architecture implemented in Go (Golang) for the Smart One-Stop Digital Hearing & Automated Escalation Platform is detailed below
+625: The platform follows a Clean Architecture / Modular Monolith transitioning to Event-Driven Microservices designed for high auditability, deterministic state transitions, and high availability across distributed municipal offices.
+626: ┌────────────────────────────────────────────────────────────┐
+627: │                   Domain Layer (Core)                      │
+628: │   - Pure Business Rules (SLA Policies, Escalation Domain)   │
+629: │   - Domain Entities (Case, HearingSlot, Structure)         │
+630: └─────────────────────────────▲──────────────────────────────┘
+631: │
+632: ┌─────────────────────────────┴──────────────────────────────┐
+633: │                 Application / Use Cases                    │
+634: │   - Commands & Queries (CQRS via MediatR-style handlers)   │
+635: │   - Port Interfaces (ICaseRepository, INotificationBus)    │
+636: └─────────────────────────────▲──────────────────────────────┘
+637: │
+638: ┌─────────────────────────────┴──────────────────────────────┐
+639: │                  Infrastructure Layer                      │
+640: │   - SQLAlchemy 2.0 / PostgreSQL Driver                     │
+641: │   - Redis / Celery Task Queues & Distributed Locks         │
+642: │   - S3-compatible Object Storage (MinIO / AWS S3)          │
+643: │   - Telegram Bot API / SMS Gateways / WebRTC Signaling     │
+644: └─────────────────────────────▲──────────────────────────────┘
+645: │
+646: ┌─────────────────────────────┴──────────────────────────────┐
+647: │                 Presentation / API Layer                   │
+648: │   - FastAPI HTTP Handlers & WebSockets                     │
+649: │   - JWT / OAuth2 Security Middleware & RBAC Filters        │
+650: └────────────────────────────────────────────────────────────┘
+651: Core Design Principles
+652: Separation of Concerns: Business logic (SLA deadlines, escalations) is decoupled from transport mechanisms (FastAPI endpoints, Telegram webhooks).
+653: Immutable Auditability: The cases table maintains current operational state, while case_audit_logs acts as an append-only ledger of every mutation, manual change, and automated escalation.
+654: Optimistic Locking with Distributed Consensus: Concurrent state mutations and multi-worker SLA reviews use PostgreSQL row-level locks (SELECT ... FOR UPDATE SKIP LOCKED) and Redis distributed locks (Redlock) to eliminate duplicate escalations.
+655: Idempotency: All webhook endpoints, background worker jobs, and escalation transitions accept idempotency keys (X-Idempotency-Key or hashed event IDs).
+656: 2. Global System Topology
+657: [ Citizens: Telegram / Web / PWA ]       [ Officials: Admin / Supervisor Web SPA ]
+658: │                                           │
+659: └─────────────────────┬─────────────────────┘
+660: │ HTTPS / WSS
+661: ▼
+662: ┌───────────────────────────────────┐
+663: │   Reverse Proxy & Load Balancer   │
+664: │      (NGINX / Cloudflare Edge)    │
+665: │  - SSL Termination & Rate Limiting│
+666: └─────────────────┬─────────────────┘
+667: │
+668: ▼
+669: ┌───────────────────────────────────┐
+670: │          API Gateway              │
+671: │  - JWT Verification & Auth Routing│
+672: │  - Request Validation & Tracing   │
+673: └─────────────────┬─────────────────┘
+674: │
+675: ┌──────────────────────────┼──────────────────────────┐
+676: ▼                          ▼                          ▼
+677: ┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+678: │ Case & Intake Service│   │ Hearing & Slot Engine│   │ Analytics & Audit    │
+679: │ (FastAPI Cluster)    │   │ (WebRTC Signaling)   │   │ (Reporting Engine)   │
+680: └──────────┬───────────┘   └──────────┬───────────┘   └──────────┬───────────┘
+681: │                          │                          │
+682: └──────────────────────────┼──────────────────────────┘
+683: │
+684: ┌──────────────┴──────────────┐
+685: ▼                             ▼
+686: ┌─────────────────────┐       ┌─────────────────────┐
+687: │ PostgreSQL Primary  │       │  Redis Cache & Bus  │
+688: │ (Read/Write Replica)│       │  - Celery Broker    │
+689: └──────────┬──────────┘       │  - Pub/Sub Events   │
+690: │ WAL              │  - Session Storage  │
+691: ▼                  └──────────┬──────────┘
+692: ┌─────────────────────┐                  │
+693: │ PostgreSQL Standby  │                  ▼
+694: │ (Read-Only Cluster) │       ┌─────────────────────┐
+695: └─────────────────────┘       │ Background Workers  │
+696: │ (Celery / Beat)     │
+697: │ - SLA Cron Engine   │
+698: │ - AI/OCR Pipelines  │
+699: │ - SMS/Push Dispatch │
+700: └─────────────────────┘
+701: 3. Detailed Data Architecture & Entity Relationships
+702: The relational design ensures ACID guarantees, hierarchical self-referencing administrative boundaries, and zero data loss on cascading deletions.
+703: +---------------------------+       +---------------------------+
+704: | administrative_structures |       |         citizens          |
+705: +---------------------------+       +---------------------------+
+706: | PK  id                    |<--┐   | PK  id                    |
+707: |     name                  |   │   |     full_name             |
+708: |     level (enum)          |   │   |     phone_number (UK)     |
+709: | FK  parent_id             |---┘   |     national_id           |
+710: |     code (UK)             |       |     telegram_chat_id (UK) |
+711: |     created_at            |       | FK  woreda_id             |
+712: +-------------┬-------------+       +-------------┬-------------+
+713: │ 1                                 │ 1
+714: │                                   │
+715: │ N                                 │ N
+716: ▼                                   ▼
+717: +---------------------------+       +---------------------------+
+718: |           users           |       |           cases           |
+719: +---------------------------+       +---------------------------+
+720: | PK  id                    |       | PK  id                    |
+721: |     full_name             |       |     ticket_number (UK)    |
+722: |     email (UK)            |       | FK  citizen_id            |
+723: |     password_hash         |       | FK  service_type_id       |
+724: |     role (enum)           |       | FK  current_structure_id  |
+725: | FK  structure_id          |       | FK  assigned_to_user_id   |
+726: |     is_active             |       |     title / description   |
+727: +-------------┬-------------+       |     status (enum)         |
+728: │                     |     sla_deadline (indexed)|
+729: │ 1                   |     is_escalated          |
+730: │                     |     qr_verification_code  |
+731: │ N                   +-------┬-------┬-------┬---+
+732: ▼                             │       │       │
+733: +---------------------------+               │       │       │
+734: |       hearing_slots       |               │       │       │
+735: +---------------------------+               │       │       │
+736: | PK  id                    |               │       │       │
+737: | FK  case_id               |<--------------┘       │       │
+738: | FK  official_id           |                       │       │
+739: |     hearing_date          |                       │       │
+740: |     meeting_link          |                       │       │
+741: |     status (enum)         |                       │       │
+742: +---------------------------+                       │       │
+743: │       │
+744: ┌───────────────────────────────────────────┘       │
+745: │ 1                                                 │ 1
+746: ▼ N                                                 ▼ N
+747: +---------------------------+               +---------------------------+
+748: |      case_attachments     |               |      case_audit_logs      |
+749: +---------------------------+               +---------------------------+
+750: | PK  id                    |               | PK  id                    |
+751: | FK  case_id               |               | FK  case_id               |
+752: |     file_name             |               | FK  performed_by (null sys)
+753: |     file_url (S3)         |               |     action                |
+754: |     extracted_ocr_text    |               |     old_value (JSONB)     |
+755: |     mime_type             |               |     new_value (JSONB)     |
+756: +---------------------------+               |     created_at            |
+757: +---------------------------+
+758: Strategic Partitioning & Indexes
+759: Partitioning: The case_audit_logs table uses PostgreSQL Range Partitioning by created_at (monthly partitions) to maintain query efficiency and simplify cold data archiving.
+760: Partial Functional Indexing:
+761: SQL
+762: CREATE INDEX idx_cases_active_sla ON cases (sla_deadline, current_structure_id)
+763: WHERE status NOT IN ('RESOLVED', 'REJECTED');
+764: This keeps the index compact and ensures the SLA worker scans only active cases without performing table scans.
+765: 4. End-to-End Execution Sequence Diagrams
+766: 4.1 Citizen Intake, AI Processing, & Ticket Generation
+767: Citizen               Telegram / Web App          Intake API              Queue / S3             PostgreSQL
+768: │                          │                       │                       │                       │
+769: │── Submit Grievance ─────>│                       │                       │                       │
+770: │   (Voice / Text / PDF)   │                       │                       │                       │
+771: │                          │── POST /cases ───────>│                       │                       │
+772: │                          │   (Multi-part form)   │                       │                       │
+773: │                          │                       │── Save Raw Doc ──────>│ (MinIO / S3)          │
+774: │                          │                       │                       │                       │
+775: │                          │                       │── Enqueue Extraction ─>│ (Redis Queue)         │
+776: │                          │                       │   (STT / OCR Task)    │                       │
+777: │                          │                       │                       │                       │
+778: │                          │                       │── Compute SLA Date    │                       │
+779: │                          │                       │── INSERT Case ───────────────────────────────>│
+780: │                          │                       │── INSERT Audit Log ──────────────────────────>│
+781: │                          │                       │                       │                       │
+782: │                          │                       │<─ Return Case UUID ───┼───────────────────────│
+783: │                          │<─ 201 Created ────────│                       │                       │
+784: │                          │   (Ticket, QR Payload)│                       │                       │
+785: │<─ Confirm + Tracking Link│                       │                       │                       │
+786: 4.2 Automated SLA Escalation Engine (Race-Condition Free)
+787: The SLA scheduler avoids deadlocks and dual-escalation by utilizing PostgreSQL's FOR UPDATE SKIP LOCKED inside batched transactions:
+788: Celery Beat Worker              PostgreSQL Database                 Target Superior Official
+789: │                                     │                                  │
+790: │── Every 60s: Fetch Breached Cases ──│                                  │
+791: │   SELECT * FROM cases               │                                  │
+792: │   WHERE sla_deadline <= NOW()       │                                  │
+793: │   AND status NOT IN (Closed)        │                                  │
+794: │   FOR UPDATE SKIP LOCKED LIMIT 100  │                                  │
+795: │                                     │                                  │
+796: │<─ Return Locked Rows ───────────────│                                  │
+797: │                                     │                                  │
+798: │── Process Escalation Logic ─────────│                                  │
+799: │   1. Resolve parent structure ID     │                                  │
+800: │   2. Update status -> ESCALATED_*   │                                  │
+801: │   3. Extend SLA deadline (+24h)     │                                  │
+802: │   4. Write immutable Audit Log      │                                  │
+803: │                                     │                                  │
+804: │── COMMIT Transaction ──────────────>│ (Locks Released)                 │
+805: │                                                                        │
+806: │── Enqueue Notification Event ─────────────────────────────────────────>│
+807: │   (SMS / Push Alert to Sub-City / City Manager)                        │
+808: 5. Production Application Code Layout
+809: The project follows standard Domain-Driven Design (DDD) patterns for Python/FastAPI:
+810: src/
+811: ├── core/
+812: │   ├── config.py                 # Pydantic BaseSettings (12-Factor App)
+813: │   ├── database.py               # Async engine, SessionLocal, Base
+814: │   ├── security.py               # JWT decode/encode, Argon2 password hasher
+815: │   └── exceptions.py             # Custom domain exceptions & global handlers
+816: ├── modules/
+817: │   ├── administration/           # Structures & User Management
+818: │   │   ├── models.py
+819: │   │   ├── schemas.py
+820: │   │   ├── services.py
+821: │   │   └── router.py
+822: │   ├── cases/                    # Ticket Intake & Lifecycle
+823: │   │   ├── models.py
+824: │   │   ├── schemas.py
+825: │   │   ├── repository.py         # DB query abstractions (Clean architecture)
+826: │   │   ├── services.py           # Domain operations (create, transition)
+827: │   │   └── router.py
+828: │   ├── hearings/                 # Appointment Scheduling & Rooms
+829: │   │   ├── models.py
+830: │   │   ├── schemas.py
+831: │   │   ├── services.py
+832: │   │   └── router.py
+833: │   └── audit/                    # Immutable Logging & Bottleneck Analytics
+834: │       ├── models.py
+835: │       └── services.py
+836: ├── workers/
+837: │   ├── celery_app.py             # Celery instantiation & broker config
+838: │   ├── tasks_sla.py              # Automated SLA check-and-escalate worker
+839: │   ├── tasks_ocr.py              # OCR & speech-to-text processing
+840: │   └── tasks_notifications.py    # SMS gateway & Telegram bot push tasks
+841: ├── migrations/                   # Alembic environment & version files
+842: └── main.py                       # FastAPI entrypoint, middleware, router mount
+843: 6. Concrete Enterprise Security & Middleware Implementation
+844: The implementation below demonstrates declarative role enforcement, transactional consistency, and thread-safe DB session pooling.
+845: 6.1 Database Session Provider & Core Base (src/core/database.py)
+846: Python
+847: from typing import AsyncGenerator
+848: from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+849: from sqlalchemy.orm import DeclarativeBase
+850: from src.core.config import settings
+852: engine = create_async_engine(
+853: settings.DATABASE_URL,
+854: pool_size=settings.DB_POOL_SIZE,
+855: max_overflow=settings.DB_MAX_OVERFLOW,
+856: pool_pre_ping=True,
+857: echo=settings.DB_ECHO,
+858: )
+860: AsyncSessionLocal = async_sessionmaker(
+861: bind=engine,
+862: class_=AsyncSession,
+863: autocommit=False,
+864: autoflush=False,
+865: expire_on_commit=False,
+866: )
+868: class Base(DeclarativeBase):
+869: pass
+871: async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+872: async with AsyncSessionLocal() as session:
+873: try:
+874: yield session
+875: except Exception:
+876: await session.rollback()
+877: raise
+878: finally:
+879: await session.close()
+880: 6.2 Declarative Role-Based Access Control (src/core/security.py)
+881: Python
+882: from typing import List, Sequence
+883: from uuid import UUID
+884: from fastapi import Depends, HTTPException, status
+885: from fastapi.security import OAuth2PasswordBearer
+886: from jose import JWTError, jwt
+887: from sqlalchemy import select
+888: from sqlalchemy.ext.asyncio import AsyncSession
+890: from src.core.database import get_db_session
+891: from src.core.config import settings
+892: from src.modules.administration.models import User, UserRole
+894: oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+896: async def get_current_user(
+897: token: str = Depends(oauth2_scheme),
+898: db: AsyncSession = Depends(get_db_session),
+899: ) -> User:
+900: credentials_exception = HTTPException(
+901: status_code=status.HTTP_401_UNAUTHORIZED,
+902: detail="Invalid credentials or session expired.",
+903: headers={"WWW-Authenticate": "Bearer"},
+904: )
+905: try:
+906: payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+907: user_id_str: str = payload.get("sub")
+908: if not user_id_str:
+909: raise credentials_exception
+910: user_id = UUID(user_id_str)
+911: except (JWTError, ValueError):
+912: raise credentials_exception
+914: stmt = select(User).where(User.id == user_id, User.is_active.is_(True))
+915: result = await db.execute(stmt)
+916: user = result.scalar_one_or_none()
+918: if user is None:
+919: raise credentials_exception
+920: return user
+922: class RequireRoles:
+923: """
+924: Dependency for declarative endpoint authorization.
+925: Usage: Depends(RequireRoles([UserRole.SUPER_ADMIN, UserRole.CITY_DIRECTOR]))
+926: """
+927: def __init__(self, allowed_roles: Sequence[UserRole]):
+928: self.allowed_roles = set(allowed_roles)
+930: def __call__(self, current_user: User = Depends(get_current_user)) -> User:
+931: if current_user.role not in self.allowed_roles:
+932: raise HTTPException(
+933: status_code=status.HTTP_403_FORBIDDEN,
+934: detail=f"Access denied. Required scope: {[r.value for r in self.allowed_roles]}",
+935: )
+936: return current_user
+937: 6.3 Transactional Escalation Worker Task (src/workers/tasks_sla.py)
+938: Python
+939: from datetime import datetime, timezone, timedelta
+940: from sqlalchemy import select
+941: from sqlalchemy.orm import selectinload
+942: from src.core.database import AsyncSessionLocal
+943: from src.modules.cases.models import Case, CaseStatus
+944: from src.modules.administration.models import AdministrativeStructure, AdminLevel
+945: from src.modules.audit.models import CaseAuditLog
+947: async def execute_sla_escalation_sweep():
+948: """
+949: Scans for expired tickets using row-level locking (SKIP LOCKED)
+950: to allow concurrent worker scaling without duplicate escalations.
+951: """
+952: now = datetime.now(timezone.utc)
+954: async with AsyncSessionLocal() as session:
+955: async with session.begin():
+956: # Acquire lock on breached cases only
+957: stmt = (
+958: select(Case)
+959: .where(
+960: Case.status.notin_([CaseStatus.RESOLVED, CaseStatus.REJECTED]),
+961: Case.sla_deadline <= now,
+962: )
+963: .with_for_update(skip_locked=True)
+964: .limit(100)
+965: )
+966: result = await session.execute(stmt)
+967: breached_cases = result.scalars().all()
+969: for case in breached_cases:
+970: # Load current administrative node
+971: struct_stmt = (
+972: select(AdministrativeStructure)
+973: .where(AdministrativeStructure.id == case.current_structure_id)
+974: )
+975: struct_res = await session.execute(struct_stmt)
+976: current_struct = struct_res.scalar_one_or_none()
+978: if not current_struct or not current_struct.parent_id:
+979: continue  # Already at top municipal tier or unlinked
+981: # Escalate Woreda -> Sub-City
+982: if current_struct.level == AdminLevel.WOREDA:
+983: case.current_structure_id = current_struct.parent_id
+984: case.status = CaseStatus.ESCALATED_TO_SUBCITY
+985: case.is_escalated = True
+986: case.escalation_count += 1
+987: case.sla_deadline = now + timedelta(hours=24)
+989: audit = CaseAuditLog(
+990: case_id=case.id,
+991: performed_by=None,  # System Actor
+992: action="AUTO_ESCALATED_SLA_BREACH",
+993: old_value={"status": CaseStatus.SUBMITTED.value, "level": "WOREDA"},
+994: new_value={"status": case.status.value, "level": "SUB_CITY"},
+995: notes="Automated SLA breach transition from Woreda to Sub-City."
+996: )
+997: session.add(audit)
+999: # Escalate Sub-City -> City Administration
+1000: elif current_struct.level == AdminLevel.SUB_CITY:
+1001: case.current_structure_id = current_struct.parent_id
+1002: case.status = CaseStatus.ESCALATED_TO_CITY
+1003: case.is_escalated = True
+1004: case.escalation_count += 1
+1005: case.sla_deadline = now + timedelta(hours=24)
+1007: audit = CaseAuditLog(
+1008: case_id=case.id,
+1009: performed_by=None,
+1010: action="AUTO_ESCALATED_TO_CITY",
+1011: old_value={"status": CaseStatus.ESCALATED_TO_SUBCITY.value, "level": "SUB_CITY"},
+1012: new_value={"status": case.status.value, "level": "CITY"},
+1013: notes="Automated SLA breach transition from Sub-City to City Administration."
+1014: )
+1015: session.add(audit)
+1017: # Changes persist when exiting session.begin() context manager
+1018: 7. Infrastructure, Containerization & CI/CD Pipeline
+1019: 7.1 Containerization Topography (docker-compose.yml)
+1020: YAML
+1021: version: '3.8'
+1023: services:
+1024: api:
+1025: build:
+1026: context: .
+1027: dockerfile: Dockerfile
+1028: command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
+1029: ports:
+1030: - "8000:8000"
+1031: environment:
+1032: - DATABASE_URL=postgresql+asyncpg://postgres:${DB_PASSWORD}@postgres:5432/smart_onestop
+1033: - REDIS_URL=redis://redis:6379/0
+1034: depends_on:
+1035: postgres:
+1036: condition: service_healthy
+1037: redis:
+1038: condition: service_healthy
+1040: celery_worker:
+1041: build: .
+1042: command: celery -A src.workers.celery_app worker --loglevel=info -c 4
+1043: environment:
+1044: - DATABASE_URL=postgresql+asyncpg://postgres:${DB_PASSWORD}@postgres:5432/smart_onestop
+1045: - REDIS_URL=redis://redis:6379/0
+1046: depends_on:
+1047: - api
+1049: celery_beat:
+1050: build: .
+1051: command: celery -A src.workers.celery_app beat --loglevel=info
+1052: environment:
+1053: - REDIS_URL=redis://redis:6379/0
+1054: depends_on:
+1055: - redis
+1057: postgres:
+1058: image: postgres:16-alpine
+1059: environment:
+1060: POSTGRES_DB: smart_onestop
+1061: POSTGRES_USER: postgres
+1062: POSTGRES_PASSWORD: ${DB_PASSWORD}
+1063: volumes:
+1064: - pgdata:/var/lib/postgresql/data
+1065: healthcheck:
+1066: test: ["CMD-SHELL", "pg_isready -U postgres"]
+1067: interval: 5s
+1068: timeout: 5s
+1069: retries: 5
+1071: redis:
+1072: image: redis:7-alpine
+1073: healthcheck:
+1074: test: ["CMD", "redis-cli", "ping"]
+1075: interval: 5s
+1076: timeout: 5s
+1077: retries: 5
+1079: volumes:
+1080: pgdata:
+1081: 7.2 CI/CD Lifecycle Flow
+1082: [ GitHub / GitLab Repo ]
+1083: │
+1084: │ Push / Merge to 'main'
+1085: ▼
+1086: [ Automated Testing & Quality Gates ]
+1087: ├── Linting & Formatting (Ruff, Black)
+1088: ├── Type Checking (Mypy --strict)
+1089: ├── Unit & Async Integration Tests (pytest-asyncio)
+1090: └── Security Static Analysis (Bandit, Trivy Container Scan)
+1091: │
+1092: │ Artifact Passed
+1093: ▼
+1094: [ Build & Registry Publishing ]
+1095: ├── Build Multi-Stage Production Docker Image
+1096: └── Push Image to Container Registry (ECR / Harbor)
+1097: │
+1098: │ Trigger Deployment
+1099: ▼
+1100: [ Zero-Downtime Deployment (Kubernetes / Rolling Update) ]
+1101: ├── Step 1: Run Pre-Deployment DB Migration (`alembic upgrade head`)
+1102: ├── Step 2: Spin up new Pods / Containers running new revision
+1103: ├── Step 3: Readiness Probes confirm `/healthz` is live
+1104: ├── Step 4: Route traffic to new revision
+1105: └── Step 5: Terminate stale Pods gracefully
+1106: 8. Non-Functional Requirements & Observability Matrix

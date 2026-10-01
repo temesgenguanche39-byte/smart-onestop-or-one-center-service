@@ -1,0 +1,104 @@
+name: smart_onestop
+
+services:
+  # 1. Primary PostgreSQL 16 Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart_onestop_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: smart_onestop
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smart_onestop"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 7 Cache & Distributed Lock Broker
+  redis:
+    image: redis:7-alpine
+    container_name: smart_onestop_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. MinIO S3-Compatible Evidence & Document Storage
+  minio:
+    image: elestio/minio:latest
+    container_name: smart_onestop_minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  # 4. Smart One-Stop Go API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: smart_onestop_api
+    restart: always
+    command: ["/app/api"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./web:/app/web
+    environment:
+      - PORT=8080
+      - APP_ENV=production
+      - DB_DRIVER=postgres
+      - DATABASE_URL=postgres://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/smart_onestop?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET:-smart-onestop-municipal-hearing-secure-token-secret-2026}
+      - CORS_ALLOW_ORIGINS=*
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 5. Dedicated Background SLA Auto-Escalation Worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: smart_onestop_worker
+    restart: always
+    command: ["/app/worker"]
+    environment:
+      - APP_ENV=production
+      - DB_DRIVER=postgres
+      - DATABASE_URL=postgres://postgres:${DB_PASSWORD:-postgres123}@postgres:5432/smart_onestop?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+      - WORKER_INTERVAL_SEC=60
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

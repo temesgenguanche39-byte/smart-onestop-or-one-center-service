@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart One-Stop Municipal Civic Platform | የ አንድ ማዕከል አገልግሎት</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <!-- QR Code generation library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body class="theme-dark">
+
+  <!-- TOP APP BAR / FLOATING GLASS NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <div class="brand-crest">
+          <span class="crest-icon">🏛️</span>
+          <span class="crest-glow"></span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Smart One-Stop Municipal Platform</div>
+          <div class="brand-subtitle amharic-text">የ አንድ ማዕከል አገልግሎት እና አውቶማቲክ ቅሬታ መፍቻ</div>
+        </div>
+      </div>
+
+      <!-- Live Municipal Grid Status Badge (Click to Configure Gateway / Vercel Bridge) -->
+      <div class="system-status-chip online" id="systemStatusChip" onclick="openGatewayModal()" style="cursor: pointer;" title="Municipal Gateway Connectivity (Vercel & Docker Bridge)">
+        <span class="pulse-dot" id="statusPulseDot"></span>
+        <span class="status-chip-text" id="systemStatusText" data-i18n="systemOnline">Addis Ababa Municipal Cloud • Active</span>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Bilingual Language Switcher -->
+        <div class="lang-switch">
+          <button id="langEnBtn" class="lang-btn active" onclick="setLanguage('en')">EN</button>
+          <button id="langAmBtn" class="lang-btn amharic-text" onclick="setLanguage('am')">አማ</button>
+        </div>
+
+        <!-- Modern Theme Switcher (Dark / Light) -->
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark / Light Mode">
+          <span id="themeToggleIcon" class="theme-icon">☀️</span>
+          <span id="themeToggleLabel" class="theme-label" data-i18n="themeLight">Light</span>
+        </button>
+
+        <!-- Active Official Session Pill (Hidden by default) -->
+        <div id="navSessionBadge" class="nav-user-badge hidden">
+          <span id="navSessionAvatar">⚖️</span>
+          <span id="navSessionName">Official</span>
+          <button type="button" class="btn-text-sm" onclick="logoutOfficial()" title="Sign Out" style="margin-left:4px; font-size:0.75rem; color:inherit;">✕</button>
+        </div>
+
+        <!-- Mode Toggle: Citizen vs Official -->
+        <div class="mode-selector">
+          <button id="modeCitizenBtn" class="mode-btn active" onclick="switchPortal('citizen')">
+            <span class="btn-icon">👤</span>
+            <span data-i18n="citizenPortal">Citizen Portal</span>
+          </button>
+          <button id="modeOfficialBtn" class="mode-btn" onclick="switchPortal('official')">
+            <span class="btn-icon">⚖️</span>
+            <span data-i18n="officialDesk">Official Command</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="main-wrapper">
+
+    <!-- ========================================================================= -->
+    <!-- CITIZEN PORTAL SECTION                                                    -->
+    <!-- ========================================================================= -->
+    <section id="citizenSection" class="portal-section active">
+      <!-- Modern Civic Hero Banner -->
+      <div class="hero-card">
+        <div class="hero-content">
+          <div class="badge-pill">
+            <span class="pulse-dot"></span>
+            <span data-i18n="activeServiceStatus">Municipal Digital Gateway • Addis Ababa</span>
+          </div>
+          <h1 class="hero-title" data-i18n="heroTitle">Transparent Public Service & Automated SLA Resolution</h1>
+          <p class="hero-desc" data-i18n="heroDesc">
+            Eliminate in-person bureaucracy. Submit grievances directly to Woreda officers, track deterministic SLA timers, and participate in Wednesday & Friday virtual hearings.
+          </p>
+
+          <div class="hero-cta-group">
+            <button class="btn btn-primary btn-glow" onclick="showCitizenTab('intake')">
+              <span class="btn-icon">📝</span>
+              <span data-i18n="submitGrievance">Submit Grievance</span>
+            </button>
+            <button class="btn btn-secondary" onclick="showCitizenTab('track')">
+              <span class="btn-icon">🔍</span>
+              <span data-i18n="trackTicket">Track Ticket & QR</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-stats-panel">
+          <div class="stat-mini-card">
+            <div class="stat-mini-icon stat-blue">📂</div>
+            <div class="stat-mini-body">
+              <div class="stat-num" id="heroActiveCases">3</div>
+              <div class="stat-label" data-i18n="activeCasesCount">Active Grievances</div>
+            </div>
+          </div>
+          <div class="stat-mini-card stat-alert">
+            <div class="stat-mini-icon stat-red">⚡</div>
+            <div class="stat-mini-body">
+              <div class="stat-num text-red" id="heroBreachedCases">1</div>
+              <div class="stat-label" data-i18n="breachedCount">Auto-Escalating</div>
+            </div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-mini-icon stat-purple">⚖️</div>
+            <div class="stat-mini-body">
+              <div class="stat-num">Wed / Fri</div>
+              <div class="stat-label" data-i18n="hearingDays">Digital Hearing Days</div>
+            </div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-mini-icon stat-green">🛡️</div>
+            <div class="stat-mini-body">
+              <div class="stat-num text-green">100%</div>
+              <div class="stat-label">Deterministic SLA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Citizen Navigation Tabs -->
+      <div class="tab-nav">
+        <button id="citizenTabIntake" class="tab-btn active" onclick="showCitizenTab('intake')">
+          <span class="tab-icon">📥</span>
+          <span data-i18n="newComplaint">File New Grievance</span>
+        </button>
+        <button id="citizenTabTrack" class="tab-btn" onclick="showCitizenTab('track')">
+          <span class="tab-icon">🔎</span>
+          <span data-i18n="trackExisting">Track Status & Hearing Slot</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: CITIZEN INTAKE FORM (MODERN 3-STEP WIZARD) -->
+      <div id="citizenIntakeTab" class="tab-content active">
+        <div class="card form-card">
+          <div class="card-header">
+            <div class="card-header-icon">📋</div>
+            <div class="card-header-text">
+              <h2 class="card-title" data-i18n="intakeFormTitle">Citizen Grievance Submission</h2>
+              <p class="card-subtitle" data-i18n="intakeFormSubtitle">Complete the form below to receive your cryptographic ticket and SLA countdown.</p>
+            </div>
+          </div>
+
+          <!-- Multi-Step Guided Stepper Bar -->
+          <div class="form-stepper-bar">
+            <div id="formStepIndicator1" class="step-indicator-item active" onclick="setFormStep(1)">
+              <div class="step-num">1</div>
+              <div class="step-text">
+                <span class="step-sub">Phase 1</span>
+                <span class="step-main" data-i18n="step1Title">Citizen Profile</span>
+              </div>
+            </div>
+            <div class="step-connector"></div>
+            <div id="formStepIndicator2" class="step-indicator-item" onclick="setFormStep(2)">
+              <div class="step-num">2</div>
+              <div class="step-text">
+                <span class="step-sub">Phase 2</span>
+                <span class="step-main" data-i18n="step2Title">Jurisdiction & SLA</span>
+              </div>
+            </div>
+            <div class="step-connector"></div>
+            <div id="formStepIndicator3" class="step-indicator-item" onclick="setFormStep(3)">
+              <div class="step-num">3</div>
+              <div class="step-text">
+                <span class="step-sub">Phase 3</span>
+                <span class="step-main" data-i18n="step3Title">Grievance & Proof</span>
+              </div>
+            </div>
+          </div>
+
+          <form id="grievanceForm" onsubmit="handleGrievanceSubmit(event)">
+            
+            <!-- STEP 1: CITIZEN PROFILE -->
+            <div id="formStepSection1" class="form-step-section active">
+              <div class="step-section-heading">
+                <span class="step-badge">Phase 1 of 3</span>
+                <h3>Applicant Personal Identification & Verified SMS Contact</h3>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label data-i18n="fullName">Full Name *</label>
+                  <div class="input-icon-wrap">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="citizenName" class="form-input" required placeholder="e.g. Almaz Bekele">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label data-i18n="phoneNumber">Phone Number (SLA SMS Alerts) *</label>
+                  <div class="input-icon-wrap">
+                    <span class="input-icon">📱</span>
+                    <input type="tel" id="citizenPhone" class="form-input" required placeholder="+251 9XXXXXXXX">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label data-i18n="nationalId">National ID (Fayda / Kebele)</label>
+                  <div class="input-icon-wrap">
+                    <span class="input-icon">🪪</span>
+                    <input type="text" id="citizenNationalId" class="form-input" placeholder="ETH-NAT-XXXXXX">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label data-i18n="houseNumber">House Number / Kebele</label>
+                  <div class="input-icon-wrap">
+                    <span class="input-icon">🏠</span>
+                    <input type="text" id="citizenHouseNo" class="form-input" placeholder="e.g. House 412/A">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2: JURISDICTION & CLASSIFICATION -->
+            <div id="formStepSection2" class="form-step-section">
+              <div class="step-section-heading">
+                <span class="step-badge">Phase 2 of 3</span>
+                <h3>Municipal Tier Jurisdiction & Target SLA Allocation</h3>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label data-i18n="subCity">Sub-City Administration *</label>
+                  <select id="subCitySelect" class="form-input" onchange="onSubCityChange()" required>
+                    <option value="">-- Select Sub-City --</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label data-i18n="woreda">Woreda Jurisdiction (Initial Intake Tier) *</label>
+                  <select id="woredaSelect" class="form-input" required>
+                    <option value="">-- Select Woreda --</option>
+                  </select>
+                </div>
+
+                <!-- Service Type & SLA Target -->
+                <div class="form-group span-2">
+                  <label data-i18n="serviceType">Service Classification & Mandatory SLA Target *</label>
+                  <select id="serviceTypeSelect" class="form-input" required onchange="updateSlaBadge()">
+                    <option value="">-- Select Public Service Category --</option>
+                  </select>
+                  <div id="slaTargetBadge" class="sla-target-badge hidden">
+                    <span class="sla-badge-icon">⏱️</span>
+                    <span>Mandatory SLA Guaranteed Resolution: <strong id="slaTargetHours">48</strong> Hours</span>
+                  </div>
+                </div>
+
+                <!-- Priority -->
+                <div class="form-group span-2">
+                  <label data-i18n="priority">Urgency Priority</label>
+                  <select id="prioritySelect" class="form-input">
+                    <option value="NORMAL">Normal Priority (Standard SLA)</option>
+                    <option value="HIGH">High Priority (Urgent Public Interest)</option>
+                    <option value="URGENT">Urgent / Vulnerable Citizen (Elderly / Disability Priority)</option>
+                    <option value="LOW">Low Priority (General Inquiry)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3: GRIEVANCE DOSSIER & EVIDENCE -->
+            <div id="formStepSection3" class="form-step-section">
+              <div class="step-section-heading">
+                <span class="step-badge">Phase 3 of 3</span>
+                <h3>Grievance Dossier & Cryptographic Proof Verification</h3>
+              </div>
+              <div class="form-grid">
+                <div class="form-group span-2">
+                  <label data-i18n="grievanceTitle">Grievance Subject / Title *</label>
+                  <input type="text" id="grievanceTitle" class="form-input" required placeholder="e.g. Unresolved residential parcel title boundary dispute">
+                </div>
+
+                <div class="form-group span-2">
+                  <label data-i18n="detailedDescription">Detailed Description & Previous Office Responses *</label>
+                  <textarea id="grievanceDescription" class="form-textarea" rows="4" required placeholder="Explain clearly the administrative delay, previous visits, official names, and requested remedy..."></textarea>
+                </div>
+
+                <!-- Supporting Evidence Upload -->
+                <div class="form-group span-2">
+                  <label data-i18n="evidenceUpload">Supporting Evidence (Contracts, Denials, Audio Note)</label>
+                  <div class="upload-dropzone">
+                    <span class="upload-icon">📎</span>
+                    <div class="upload-text">
+                      <strong>Click to attach file</strong> or drag documents here
+                      <div class="upload-hint">Supported: PDF, JPG, PNG, MP3 (Simulated OCR & Speech-to-Text)</div>
+                    </div>
+                    <input type="file" id="evidenceFileInput" class="file-input-hidden" onchange="handleFileSelect(event)">
+                  </div>
+                  <div id="selectedFilesList" class="file-tags-list"></div>
+
+                  <!-- Citizen Voice Note Studio -->
+                  <div class="voice-memo-studio">
+                    <div class="voice-studio-header">
+                      <span class="voice-icon">🎙️</span>
+                      <div>
+                        <div class="voice-title" data-i18n="voiceStudioTitle">Citizen Voice Memo Recording (የድምጽ መልእክት መቅረጫ)</div>
+                        <div class="voice-subtitle" data-i18n="voiceStudioDesc">Explain your grievance verbally in Amharic or English. Transcribed automatically into OCR text.</div>
+                      </div>
+                    </div>
+                    <div class="voice-controls">
+                      <button type="button" id="recordVoiceBtn" class="btn btn-secondary btn-sm" onclick="toggleVoiceRecording()">
+                        <span id="recordVoiceIcon">🔴</span> <span id="recordVoiceText" data-i18n="startRecording">Record Voice Memo</span>
+                      </button>
+                      <div id="voiceWaveform" class="voice-waveform hidden">
+                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                        <span class="recording-timer" id="recordingTimer">00:00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stepper Actions Bar -->
+            <div class="form-footer stepper-footer">
+              <button type="button" id="formPrevBtn" class="btn btn-secondary" onclick="prevFormStep()" style="display:none;">
+                <span data-i18n="prevStep">← Previous Step</span>
+              </button>
+              <div class="stepper-right-actions">
+                <button type="button" id="formNextBtn" class="btn btn-primary" onclick="nextFormStep()">
+                  <span data-i18n="nextStep">Next Step →</span>
+                </button>
+                <button type="submit" id="submitGrievanceBtn" class="btn btn-primary btn-lg btn-glow" style="display:none;">
+                  <span class="btn-icon">🚀</span>
+                  <span data-i18n="submitGrievanceBtn">Submit Grievance & Generate Ticket</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 2: CITIZEN TRACKING & QR VERIFICATION -->
+      <div id="citizenTrackTab" class="tab-content">
+        <div class="card track-card">
+          <div class="card-header">
+            <div class="card-header-icon">🔎</div>
+            <div>
+              <h2 class="card-title">Real-Time Ticket & QR Verification Studio</h2>
+              <p class="card-subtitle">Observe live SLA countdown, jurisdictional tier transitions, and Wednesday/Friday hearing appointments.</p>
+            </div>
+          </div>
+
+          <div class="track-search-bar">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="trackInput" class="track-input" placeholder="Enter Ticket Number (e.g. TKT-2026-100234) or QR code hash...">
+            </div>
+            <button class="btn btn-primary" onclick="searchTicket()">
+              <span data-i18n="trackBtn">Track Grievance</span>
+            </button>
+          </div>
+
+          <!-- Quick Demo Buttons -->
+          <div class="demo-ticket-bar">
+            <span class="demo-label" data-i18n="demoTickets">Quick Demo Tickets:</span>
+            <button class="demo-tag" onclick="quickSearch('TKT-2026-100234')">TKT-2026-100234 (Active Woreda)</button>
+            <button class="demo-tag overdue-tag" onclick="quickSearch('TKT-2026-100582')">TKT-2026-100582 (Breached SLA)</button>
+            <button class="demo-tag hearing-tag" onclick="quickSearch('TKT-2026-100891')">TKT-2026-100891 (Wed Hearing)</button>
+          </div>
+
+          <!-- Search Result Display -->
+          <div id="trackResultContainer" class="track-result-container hidden">
+            <!-- Dynamic Result Card Injected Here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- OFFICIAL COMMAND CENTER SECTION                                           -->
+    <!-- ========================================================================= -->
+    <section id="officialSection" class="portal-section">
+
+      <!-- 1. OFFICIAL LOGIN GATE (Protected Access) -->
+      <div id="officialLoginGate" class="login-gate-card">
+        <div class="login-crest-wrap">
+          <div class="login-crest">🏛️</div>
+        </div>
+        <h2 class="login-title" data-i18n="loginTitle">Municipal Staff Authentication</h2>
+        <div class="login-subtitle" data-i18n="loginSubtitle">Official Command Center & Digital Hearing Desk</div>
+        <p class="login-desc" data-i18n="loginDesc">
+          Authorized personnel only. Access hearing schedules, manage escalated grievances, and sign immutable resolutions.
+        </p>
+
+        <!-- Error Message Alert -->
+        <div id="loginErrorAlert" class="alert-banner" style="margin-bottom: 1.25rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.1rem;">⚠️</span>
+          <span id="loginErrorMsg">Invalid official credentials.</span>
+        </div>
+
+        <form id="officialLoginForm" class="login-form" onsubmit="handleOfficialLogin(event)">
+          <div class="form-group">
+            <label data-i18n="emailAddress">Official Email Address *</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">📧</span>
+              <input type="email" id="loginEmail" class="form-input" required placeholder="officer@smartonestop.gov.et" autocomplete="username">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <label style="margin-bottom: 0;" data-i18n="password">Password *</label>
+              <button type="button" class="btn-text-sm" onclick="togglePasswordVisibility()">
+                <span id="pwdToggleIcon">👁️</span>
+                <span id="pwdToggleLabel">Show</span>
+              </button>
+            </div>
+            <div class="input-icon-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="loginPassword" class="form-input" required placeholder="••••••••••••" autocomplete="current-password">
+            </div>
+          </div>
+
+          <div class="login-options-row">
+            <label class="remember-label">
+              <input type="checkbox" id="rememberMeCheckbox" checked>
+              <span data-i18n="rememberMe">Keep me signed in</span>
+            </label>
+          </div>
+
+          <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-glow login-btn">
+            <span class="btn-icon">🔐</span>
+            <span data-i18n="signInBtn">Sign In to Official Command →</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. OFFICIAL DASHBOARD VIEW (Gated behind Session) -->
+      <div id="officialDashboardView" class="hidden">
+        <!-- Official Header Bar -->
+        <div class="official-control-header">
+          <div class="officer-profile-card">
+            <div class="officer-avatar" id="officerAvatar">⚖️</div>
+            <div>
+              <div class="officer-name-row">
+                <span class="officer-name" id="officerNameDisplay">Official User</span>
+                <span class="online-indicator" title="Connected to Municipal Gateway"></span>
+              </div>
+              <div class="officer-meta">
+                <span class="officer-role-badge" id="officerRoleBadge">OFFICIAL</span>
+                <span class="officer-struct-badge" id="officerStructBadge">Municipal Gateway</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-actions">
+            <!-- On-demand SLA Engine Sweep Trigger -->
+            <button id="triggerSlaBtn" class="btn btn-warning btn-electric" onclick="triggerSLASweepNow()">
+              <span class="btn-icon">⚡</span>
+              <span data-i18n="triggerSla">Run SLA Escalation Engine</span>
+            </button>
+
+            <!-- Official Sign Out Button -->
+            <button id="officialLogoutBtn" class="btn btn-secondary btn-sm" onclick="logoutOfficial()" title="Sign out and lock official session">
+              <span class="btn-icon">🚪</span>
+              <span data-i18n="signOut">Sign Out</span>
+            </button>
+          </div>
+        </div>
+
+      <!-- Executive KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon icon-blue">📂</div>
+          <div class="kpi-body">
+            <div class="kpi-val" id="kpiTotal">0</div>
+            <div class="kpi-title" data-i18n="kpiTotal">Total Ingested Grievances</div>
+            <div class="kpi-tag">Global Ingestion</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-yellow">
+          <div class="kpi-icon icon-yellow">⏳</div>
+          <div class="kpi-body">
+            <div class="kpi-val" id="kpiActive">0</div>
+            <div class="kpi-title" data-i18n="kpiActive">Active In-Flight Cases</div>
+            <div class="kpi-tag">Live Timers Active</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-red alert-kpi">
+          <div class="kpi-icon icon-red">🚨</div>
+          <div class="kpi-body">
+            <div class="kpi-val text-red" id="kpiBreached">0</div>
+            <div class="kpi-title" data-i18n="kpiBreached">Breached SLA Thresholds</div>
+            <div class="kpi-tag tag-alert">Auto-Escalating</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon icon-purple">🏛️</div>
+          <div class="kpi-body">
+            <div class="kpi-val" id="kpiEscalated">0</div>
+            <div class="kpi-title" data-i18n="kpiEscalated">Tier Escalations (Sub-City/City)</div>
+            <div class="kpi-tag">Multi-Tier Escalation</div>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon icon-green">✅</div>
+          <div class="kpi-body">
+            <div class="kpi-val text-green" id="kpiResolved">0</div>
+            <div class="kpi-title" data-i18n="kpiResolved">Certified Resolutions</div>
+            <div class="kpi-tag tag-success">Ledger Signed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Official Sub-Tabs -->
+      <div class="official-tab-nav">
+        <button id="offTabCases" class="tab-btn active" onclick="showOfficialTab('cases')">
+          <span class="tab-icon">🗂️</span>
+          <span data-i18n="grievanceQueue">Case Review Queue</span>
+        </button>
+        <button id="offTabHearings" class="tab-btn" onclick="showOfficialTab('hearings')">
+          <span class="tab-icon">📅</span>
+          <span data-i18n="hearingDesk">Wed & Fri Digital Hearings</span>
+        </button>
+        <button id="offTabHeatmap" class="tab-btn" onclick="showOfficialTab('heatmap')">
+          <span class="tab-icon">📊</span>
+          <span data-i18n="bottleneckHeatmap">Administrative Bottleneck Heatmap</span>
+        </button>
+        <button id="offTabAudit" class="tab-btn" onclick="showOfficialTab('audit')">
+          <span class="tab-icon">📜</span>
+          <span data-i18n="auditLedger">Immutable Audit Ledger</span>
+        </button>
+        <button id="offTabUsers" class="tab-btn" onclick="showOfficialTab('users')">
+          <span class="tab-icon">👥</span>
+          <span data-i18n="staffManagement">Staff & RBAC Accounts</span>
+        </button>
+      </div>
+
+      <!-- TAB: CASE QUEUE -->
+      <div id="offCasesTab" class="tab-content active">
+        <div class="card">
+          <div class="card-toolbar">
+            <div class="search-wrap">
+              <input type="text" id="officialSearchInput" class="form-input form-input-sm" placeholder="Search ticket #, citizen, title..." onkeyup="filterCasesTable()">
+            </div>
+            <div class="filter-group">
+              <select id="filterStatusSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
+                <option value="">All Statuses</option>
+                <option value="SUBMITTED">SUBMITTED</option>
+                <option value="UNDER_REVIEW">UNDER REVIEW</option>
+                <option value="SCHEDULED_FOR_HEARING">SCHEDULED FOR HEARING</option>
+                <option value="ESCALATED_TO_SUBCITY">ESCALATED TO SUBCITY</option>
+                <option value="ESCALATED_TO_CITY">ESCALATED TO CITY</option>
+                <option value="RESOLVED">RESOLVED</option>
+              </select>
+              <select id="filterBreachSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
+                <option value="">All Deadlines</option>
+                <option value="true">Breached SLA Only</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="loadOfficialCases()">
+                <span>🔄 Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticket #</th>
+                  <th>Citizen & Phone</th>
+                  <th>Classification</th>
+                  <th>Current Tier</th>
+                  <th>SLA Countdown</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="casesTableBody">
+                <!-- Cases dynamically populated here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: WEDNESDAY & FRIDAY DIGITAL HEARINGS -->
+      <div id="offHearingsTab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon">⚖️</div>
+            <div>
+              <h2 class="card-title" data-i18n="hearingTitle">Digital Hearing Desk (Wednesdays & Fridays)</h2>
+              <p class="card-subtitle" data-i18n="hearingSubtitle">In-app virtual hearing room scheduler replacing in-person office queues per municipal protocol.</p>
+            </div>
+          </div>
+
+          <div class="hearings-desk-grid">
+            <div class="hearing-calendar-sidebar">
+              <label class="form-label" data-i18n="selectHearingDay">Select Presiding Hearing Session:</label>
+              <input type="date" id="hearingDatePicker" class="form-input" onchange="loadHearingsForDate()">
+              <div class="hearing-rule-note">
+                <span class="note-icon">ℹ️</span>
+                <span>Rule: Hearing slots are strictly bound to <strong>Wednesday</strong> or <strong>Friday</strong> municipal dispute calendars.</span>
+              </div>
+            </div>
+
+            <div class="hearing-slots-view">
+              <div class="slots-header">
+                <h3 id="hearingDateHeading">Scheduled Sessions</h3>
+                <span class="badge" id="hearingSlotCount">0 Sessions</span>
+              </div>
+              <div id="hearingSlotsList" class="slots-container">
+                <!-- Injected dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ADMINISTRATIVE BOTTLENECK HEATMAP -->
+      <div id="offHeatmapTab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon">📈</div>
+            <div>
+              <h2 class="card-title">Cross-Tier Administrative Bottleneck Heatmap</h2>
+              <p class="card-subtitle">Real-time observability comparing response latencies and breach rates across Woredas, Sub-Cities, and City Administration.</p>
+            </div>
+          </div>
+
+          <div class="heatmap-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Administrative Tier</th>
+                  <th>Level</th>
+                  <th>Active Cases</th>
+                  <th>Breached Cases</th>
+                  <th>Breach % Rate</th>
+                  <th>Efficiency Index</th>
+                </tr>
+              </thead>
+              <tbody id="heatmapTableBody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: IMMUTABLE AUDIT LEDGER -->
+      <div id="offAuditTab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon">🛡️</div>
+            <div>
+              <h2 class="card-title">Cryptographic & Append-Only Audit Ledger</h2>
+              <p class="card-subtitle">Immutable records of every ticket mutation, official intervention, and automated SLA escalation.</p>
+            </div>
+          </div>
+
+          <div id="auditLogList" class="audit-timeline">
+            <!-- Dynamic audit trail items injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: OFFICIAL STAFF & ADMINISTRATOR MANAGEMENT -->
+      <div id="offUsersTab" class="tab-content">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div class="card-header-icon">👥</div>
+              <div>
+                <h2 class="card-title">Official Municipal Staff Directory & RBAC Provisioning</h2>
+                <p class="card-subtitle">Provision, assign, and revoke official credentials across Woredas, Sub-Cities, and City Administration.</p>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-glow" onclick="openCreateUserModal()">
+              <span class="btn-icon">➕</span>
+              <span>Provision New Official</span>
+            </button>
+          </div>
+
+          <div class="card-toolbar">
+            <div class="search-wrap">
+              <input type="text" id="officialUserSearchInput" class="form-input form-input-sm" placeholder="Search officer name, email, or role..." onkeyup="filterOfficialUsersTable()">
+            </div>
+            <div class="filter-group">
+              <button class="btn btn-secondary btn-sm" onclick="loadOfficialUsers()">
+                <span>🔄 Refresh Staff Directory</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Officer Name</th>
+                  <th>Contact Info</th>
+                  <th>RBAC Role</th>
+                  <th>Assigned Jurisdiction</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="officialUsersTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div> <!-- end #officialDashboardView -->
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: SCHEDULE DIGITAL HEARING                                           -->
+  <!-- ========================================================================= -->
+  <div id="scheduleHearingModal" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Schedule Digital Hearing (Wed / Fri)</h3>
+        <button class="modal-close" onclick="closeModal('scheduleHearingModal')">&times;</button>
+      </div>
+      <form onsubmit="handleScheduleHearingSubmit(event)">
+        <input type="hidden" id="modalCaseId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Case Ticket #</label>
+            <input type="text" id="modalTicketNum" class="form-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>Hearing Date (Must be Wednesday or Friday) *</label>
+            <input type="date" id="modalHearingDate" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Time *</label>
+              <input type="time" id="modalStartTime" class="form-input" required value="10:00">
+            </div>
+            <div class="form-group">
+              <label>End Time *</label>
+              <input type="time" id="modalEndTime" class="form-input" required value="10:30">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Virtual Meeting Room</label>
+            <input type="text" id="modalMeetingLink" class="form-input" placeholder="Generated automatically (Jitsi/WebRTC room)">
+          </div>
+          <div class="form-group">
+            <label>Hearing Agenda / Instructions for Citizen</label>
+            <textarea id="modalHearingNotes" class="form-textarea" rows="2" placeholder="Citizen must present original title deed during virtual hearing..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('scheduleHearingModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm & Dispatch Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: RESOLVE CASE & ISSUE CERTIFIED DECISION                             -->
+  <!-- ========================================================================= -->
+  <div id="resolveCaseModal" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Sign Off Official Resolution</h3>
+        <button class="modal-close" onclick="closeModal('resolveCaseModal')">&times;</button>
+      </div>
+      <form onsubmit="handleResolveCaseSubmit(event)">
+        <input type="hidden" id="modalResolveCaseId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Case Ticket #</label>
+            <input type="text" id="modalResolveTicket" class="form-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>Official Resolution Summary & Directives *</label>
+            <textarea id="modalResolutionSummary" class="form-textarea" rows="4" required placeholder="Specify the administrative ruling, survey rectification, license approval, or Kebele directive..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Decision Notes / Legal Basis</label>
+            <input type="text" id="modalDecisionNotes" class="form-input" placeholder="e.g. In accordance with Proclamation No. 721/2011, Art. 14">
+          </div>
+          <div class="certified-stamp-badge">
+            <span class="stamp-icon">🛡️</span>
+            <span>Decision will be cryptographically certified and logged in immutable ledger.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('resolveCaseModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Certify & Resolve Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: PROVISION NEW OFFICIAL USER                                        -->
+  <!-- ========================================================================= -->
+  <div id="createUserModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('createUserModal')">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Provision New Municipal Staff Account</h3>
+        <button class="modal-close" onclick="closeModal('createUserModal')">&times;</button>
+      </div>
+      <form onsubmit="handleCreateUserSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Full Official Name *</label>
+            <input type="text" id="newUserName" class="form-input" required placeholder="e.g. Dawit Haile">
+          </div>
+          <div class="form-group">
+            <label>Official Email Address *</label>
+            <input type="email" id="newUserEmail" class="form-input" required placeholder="e.g. dawit.officer@smartonestop.gov.et">
+          </div>
+          <div class="form-group">
+            <label>Official Phone Number *</label>
+            <input type="tel" id="newUserPhone" class="form-input" required placeholder="+251 9XXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label>Initial Login Password *</label>
+            <input type="password" id="newUserPassword" class="form-input" required minlength="6" value="Password123!">
+          </div>
+          <div class="form-group">
+            <label>Assigned RBAC Role *</label>
+            <select id="newUserRole" class="form-input" required>
+              <option value="WOREDA_OFFICER">WOREDA_OFFICER (Initial Tier Intake Officer)</option>
+              <option value="SUBCITY_MANAGER">SUBCITY_MANAGER (Sub-City Escalation Desk)</option>
+              <option value="CITY_DIRECTOR">CITY_DIRECTOR (City-Wide Appeals & Hearings)</option>
+              <option value="SERVICE_DESK_AGENT">SERVICE_DESK_AGENT (Kiosk & Physical Intake)</option>
+              <option value="SUPER_ADMIN">SUPER_ADMIN (Full Platform Administrator)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Assigned Administrative Jurisdiction</label>
+            <select id="newUserStructure" class="form-input">
+              <option value="">-- Addis Ababa City Administration (Global) --</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('createUserModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create & Issue Credentials</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Municipal Backend Gateway Configuration Modal (Vercel & Docker Cloud Bridge) -->
+  <div id="gatewayModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('gatewayModal')">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem;">
+            <span>🌐</span>
+            <span>Municipal Cloud Gateway Bridge</span>
+          </h3>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">
+            Connect Vercel / Cloud Citizen Portal to your Local Municipal Docker System
+          </p>
+        </div>
+        <button class="modal-close" onclick="closeModal('gatewayModal')">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Live Connection Status Card -->
+        <div id="gatewayStatusDisplay" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+          <div style="font-size:0.82rem; color:var(--text-tertiary);">Status: Probing backend connection...</div>
+        </div>
+
+        <!-- Custom Gateway URL Input -->
+        <div class="form-group">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Backend Gateway URL (Host or Tunnel)</span>
+            <span style="font-size:0.75rem; color:var(--text-tertiary);">Leave blank for Same-Origin (Local Docker)</span>
+          </label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="url" id="gatewayUrlInput" class="form-input" placeholder="e.g. https://my-subdomain.loca.lt or http://localhost:8080" style="flex:1;">
+            <button type="button" id="gatewayPingBtn" class="btn btn-secondary" onclick="pingCurrentGateway()" title="Ping this endpoint now">
+              ⚡ Ping
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Connection Presets -->
+        <div class="form-group" style="margin-top:1rem;">
+          <label style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-tertiary);">One-Click Presets</label>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
+            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('')" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--text-secondary); cursor:pointer;">
+              🏠 Same-Origin / Localhost
+            </button>
+            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('http://localhost:8080')" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--text-secondary); cursor:pointer;">
+              🐳 Docker Local (http://localhost:8080)
+            </button>
+          </div>
+        </div>
+
+        <!-- Explanatory Guide Box -->
+        <div style="background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.25); border-radius:var(--radius-md); padding:0.85rem; font-size:0.8rem; line-height:1.5; color:var(--text-secondary); margin-top:1rem;">
+          <div style="font-weight:700; color:#60a5fa; margin-bottom:0.35rem; display:flex; align-items:center; gap:0.35rem;">
+            <span>💡</span>
+            <span>How to connect Citizen Portal on Vercel to your Local Docker:</span>
+          </div>
+          <ol style="margin-left:1.25rem; margin-top:0.25rem; padding:0;">
+            <li>On your PC running Docker, start an HTTPS tunnel: <br><code style="background:var(--bg-elevated); padding:2px 6px; border-radius:4px; font-size:0.76rem; color:#93c5fd;">npx localtunnel --port 8080</code> (or Cloudflare Tunnel)</li>
+            <li>Copy the public HTTPS URL generated (e.g. <code style="font-size:0.76rem;">https://eth-portal.loca.lt</code>)</li>
+            <li>Paste it above, or share the link with <code style="font-size:0.76rem;">?api=https://eth-portal.loca.lt</code> to auto-connect any citizen device!</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('gatewayModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveGatewaySettings()">
+          <span>💾 Save Gateway & Sync</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
