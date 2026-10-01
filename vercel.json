@@ -22,6 +22,14 @@
     {
       "source": "/static/(.*)",
       "destination": "/$1"
+    },
+    {
+      "source": "/healthz",
+      "destination": "https://better-trees-wash.loca.lt/healthz"
+    },
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "https://better-trees-wash.loca.lt/api/v1/$1"
     }
   ]
 }

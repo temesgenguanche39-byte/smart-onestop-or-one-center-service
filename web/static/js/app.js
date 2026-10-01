@@ -178,6 +178,12 @@ async function pingCurrentGateway() {
       </div>
     `;
   } else {
+    const isRemote = window.location.hostname.includes('vercel.app') || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1');
+    const vercelTip = (!targetUrl && isRemote) ? `
+      <div style="margin-top:0.6rem; padding:0.6rem; background:rgba(245, 158, 11, 0.12); border:1px solid rgba(245, 158, 11, 0.35); border-radius:6px; font-size:0.78rem; color:#fde68a; line-height:1.4;">
+        ⚠️ <strong>Hosted on Cloud / Vercel:</strong> The static frontend cannot find a local backend on Vercel itself. Click <strong>🚇 Live Tunnel</strong> below or paste your tunnel URL (e.g. <code>https://better-trees-wash.loca.lt</code>) and click <strong>Save Gateway & Sync</strong>.
+      </div>
+    ` : '';
     statusBox.innerHTML = `
       <div style="color:#ef4444; font-weight:700; display:flex; align-items:center; gap:0.5rem;">
         <span>❌ UNREACHABLE / OFFLINE</span>
@@ -185,6 +191,7 @@ async function pingCurrentGateway() {
       <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">
         Error: ${res.error || 'HTTP ' + res.status} • Tried: <code>${res.url}</code>
       </div>
+      ${vercelTip}
     `;
   }
 }
