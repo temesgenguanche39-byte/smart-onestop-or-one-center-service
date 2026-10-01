@@ -25,11 +25,11 @@
     },
     {
       "source": "/healthz",
-      "destination": "https://better-trees-wash.loca.lt/healthz"
+      "destination": "https://19d22af1980e2f.lhr.life/healthz"
     },
     {
       "source": "/api/v1/(.*)",
-      "destination": "https://better-trees-wash.loca.lt/api/v1/$1"
+      "destination": "https://19d22af1980e2f.lhr.life/api/v1/$1"
     }
   ]
 }
