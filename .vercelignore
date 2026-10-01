@@ -1,0 +1,15 @@
+# Exclude backend Go source and Docker files from Vercel deployment
+cmd/
+internal/
+Dockerfile
+docker-compose.yml
+documentation/
+extracted_doc_summary.txt
+go.mod
+go.sum
+*.db
+*.sqlite
+test_suite.py
+start-tunnel.bat
+scratch/
+tmp/

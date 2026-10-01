@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "name": "smart-onestop-municipal-platform",
+  "framework": null,
+  "outputDirectory": "web/static",
   "cleanUrls": true,
   "headers": [
     {
@@ -20,19 +21,7 @@
   "rewrites": [
     {
       "source": "/static/(.*)",
-      "destination": "/web/static/$1"
-    },
-    {
-      "source": "/",
-      "destination": "/web/static/index.html"
-    },
-    {
-      "source": "/css/(.*)",
-      "destination": "/web/static/css/$1"
-    },
-    {
-      "source": "/js/(.*)",
-      "destination": "/web/static/js/$1"
+      "destination": "/$1"
     }
   ]
 }
