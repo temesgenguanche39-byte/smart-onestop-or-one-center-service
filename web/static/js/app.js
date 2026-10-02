@@ -2054,36 +2054,41 @@ function renderCasesTable(cases) {
     }
 
     const tr = document.createElement('tr');
+    tr.className = 'case-queue-row';
     tr.innerHTML = `
-      <td>
+      <td data-label="Ticket #">
         <span class="ticket-cell" onclick="openCaseDetailModal('${c.id}')" title="Click to open Case Dossier & Evidence Vault">${c.ticket_number}</span>
       </td>
-      <td>
+      <td data-label="Citizen Info">
         <div><strong>${c.citizen_name}</strong></div>
         <div style="font-size:0.75rem; color:#94a3b8;">${c.citizen_phone}</div>
       </td>
-      <td>${c.service_type_name}</td>
-      <td>
+      <td data-label="Service Type">
+        <span>${c.service_type_name}</span>
+      </td>
+      <td data-label="Current Jurisdiction">
         <div>${c.current_structure_name}</div>
         <div style="font-size:0.75rem; color:#3b82f6;">${c.structure_level}</div>
       </td>
-      <td>${slaTag}</td>
-      <td>
+      <td data-label="SLA Working Days">
+        ${slaTag}
+      </td>
+      <td data-label="Status">
         <span class="status-badge status-${c.status}">${c.status.replace(/_/g, ' ')}</span>
       </td>
-      <td>
-        <div style="display:flex; gap:0.4rem; align-items:center;">
+      <td data-label="Actions" class="case-actions-cell">
+        <div class="case-card-actions">
           <button class="btn btn-secondary btn-sm" title="Open Case Dossier, Documents & Audio Studio" onclick="openCaseDetailModal('${c.id}')" style="background:rgba(56,189,248,0.15); border-color:var(--cyan-500); color:var(--cyan-400); font-weight:700;">
             📂 Dossier
           </button>
           <button class="btn btn-secondary btn-sm" title="Schedule Wed/Fri Hearing" onclick="openHearingModal('${c.id}', '${c.ticket_number}')">
-            📅
+            📅 Hearing
           </button>
           <button class="btn btn-primary btn-sm" title="Resolve Case" onclick="openResolveModal('${c.id}', '${c.ticket_number}')">
-            ✍️
+            ✍️ Resolve
           </button>
           <button class="btn btn-warning btn-sm" title="Manual Escalate" onclick="triggerManualEscalate('${c.id}')">
-            ⚡
+            ⚡ Escalate
           </button>
         </div>
       </td>
