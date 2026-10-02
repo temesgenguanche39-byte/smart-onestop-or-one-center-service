@@ -521,113 +521,170 @@
       </div>
 
       <!-- 2. OFFICIAL DASHBOARD VIEW (Gated behind Session) -->
-      <div id="officialDashboardView" class="hidden">
-        <!-- Official Header Bar -->
-        <div class="official-control-header">
-          <div class="officer-profile-card">
-            <div class="officer-avatar" id="officerAvatar">⚖️</div>
-            <div>
-              <div class="officer-name-row">
-                <span class="officer-name" id="officerNameDisplay">Official User</span>
-                <span class="online-indicator" title="Connected to Municipal Gateway"></span>
+      <div id="officialDashboardView" class="hidden official-app-layout">
+        <!-- Mobile Backdrop for Sidebar Drawer -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+
+        <!-- Staff Collapsible Sidebar Navigation (Phase 4) -->
+        <aside id="staffSidebar" class="staff-sidebar" aria-label="Staff Navigation">
+          <!-- Sidebar Header with Brand/Toggle -->
+          <div class="sidebar-header">
+            <div class="sidebar-brand">
+              <span class="sidebar-brand-crest">🏛️</span>
+              <div class="sidebar-brand-text">
+                <span class="sidebar-brand-title">Official Command</span>
+                <span class="sidebar-brand-sub amharic-text">የስራ መቆጣጠሪያ</span>
               </div>
-              <div class="officer-meta">
+            </div>
+            <button type="button" id="sidebarCollapseBtn" class="sidebar-toggle-btn" onclick="toggleSidebarCollapse()" title="Collapse / Expand Sidebar (Ctrl+B)">
+              <span class="toggle-icon">◀</span>
+            </button>
+          </div>
+
+          <!-- Navigation Items -->
+          <nav class="sidebar-nav">
+            <button type="button" id="sideNavCases" class="sidebar-nav-item active" onclick="showOfficialTab('cases')" title="Case Review Queue (የጉዳዮች ዝርዝር)">
+              <span class="side-nav-icon">🗂️</span>
+              <span class="side-nav-label" data-i18n="grievanceQueue">Case Review Queue</span>
+              <span class="side-nav-badge" id="sideBadgeCases">0</span>
+            </button>
+
+            <button type="button" id="sideNavHearings" class="sidebar-nav-item" onclick="showOfficialTab('hearings')" title="Wed & Fri Digital Hearings (የዲጂታል ችሎቶች)">
+              <span class="side-nav-icon">📅</span>
+              <span class="side-nav-label" data-i18n="hearingDesk">Wed & Fri Hearings</span>
+            </button>
+
+            <button type="button" id="sideNavCalendar" class="sidebar-nav-item" onclick="showOfficialTab('calendar')" title="Civic Calendar & Holidays (13-ወር መቁጠሪያና በዓላት)">
+              <span class="side-nav-icon">🗓️</span>
+              <span class="side-nav-label" data-i18n="officialCalendar">Civic Calendar & Holidays</span>
+            </button>
+
+            <button type="button" id="sideNavHeatmap" class="sidebar-nav-item" onclick="showOfficialTab('heatmap')" title="Administrative Bottleneck Heatmap (የክፍተቶች መረጃ)">
+              <span class="side-nav-icon">📊</span>
+              <span class="side-nav-label" data-i18n="bottleneckHeatmap">Bottleneck Heatmap</span>
+            </button>
+
+            <button type="button" id="sideNavAudit" class="sidebar-nav-item" onclick="showOfficialTab('audit')" title="Immutable Audit Ledger (የማይለወጥ የታሪክ መዝገብ)">
+              <span class="side-nav-icon">📜</span>
+              <span class="side-nav-label" data-i18n="auditLedger">Immutable Audit Ledger</span>
+            </button>
+
+            <button type="button" id="sideNavUsers" class="sidebar-nav-item" onclick="showOfficialTab('users')" title="Staff & RBAC Accounts (የሰራተኞችና ፍቃድ ማዕከል)">
+              <span class="side-nav-icon">👥</span>
+              <span class="side-nav-label" data-i18n="staffManagement">Staff & RBAC Accounts</span>
+            </button>
+          </nav>
+
+          <!-- Bottom Sidebar Section: Officer Profile, SLA Run, Sign Out -->
+          <div class="sidebar-footer">
+            <div class="sidebar-officer-card" title="Current Official Profile">
+              <div class="sidebar-officer-avatar" id="sidebarOfficerAvatar">⚖️</div>
+              <div class="sidebar-officer-info">
+                <div class="sidebar-officer-name" id="sidebarOfficerName">Official User</div>
+                <div class="sidebar-officer-meta">
+                  <span class="officer-role-badge" id="sidebarOfficerRole">OFFICIAL</span>
+                  <span class="officer-struct-badge" id="sidebarOfficerStruct">Municipal Gateway</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-footer-actions">
+              <button type="button" id="sidebarTriggerSlaBtn" class="btn btn-warning btn-sm sidebar-sla-btn" onclick="triggerSLASweepNow()" title="Run SLA Escalation Engine (SLA ፍተሻ)">
+                <span class="btn-icon">⚡</span>
+                <span class="sidebar-action-label" data-i18n="triggerSla">Run SLA Engine</span>
+              </button>
+              <button type="button" id="sidebarLogoutBtn" class="btn btn-secondary btn-sm sidebar-logout-btn" onclick="logoutOfficial()" title="Sign Out (ውጣ)">
+                <span class="btn-icon">🚪</span>
+                <span class="sidebar-action-label" data-i18n="signOut">Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Content Area next to Sidebar -->
+        <div class="official-main-content">
+          <!-- Top Command Context Bar with Mobile Hamburger & Status -->
+          <div class="official-top-bar">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <button type="button" id="sidebarMobileToggle" class="sidebar-mobile-btn" onclick="toggleSidebar(true)" title="Open Navigation Menu">
+                <span>☰</span>
+              </button>
+              <div class="topbar-context-title">
+                <h2 id="officialActiveViewTitle" style="font-size:1.15rem; font-weight:800; margin:0;">Case Review Queue</h2>
+                <span style="font-size:0.75rem; color:var(--text-secondary);" id="officialActiveViewSubtitle">Authorized Civic Dispute Processing</span>
+              </div>
+            </div>
+            <div class="topbar-actions">
+              <span class="online-indicator" title="Connected to Municipal Gateway"></span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="switchPortal('citizen')" title="View Public Citizen Portal">
+                <span>🌐 Citizen View</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Legacy Control Header (hidden visually to preserve ID references) -->
+          <div class="official-control-header" style="display:none;">
+            <div class="officer-profile-card">
+              <div class="officer-avatar" id="officerAvatar">⚖️</div>
+              <div>
+                <span class="officer-name" id="officerNameDisplay">Official User</span>
                 <span class="officer-role-badge" id="officerRoleBadge">OFFICIAL</span>
                 <span class="officer-struct-badge" id="officerStructBadge">Municipal Gateway</span>
               </div>
             </div>
+            <div class="control-actions">
+              <button id="triggerSlaBtn" onclick="triggerSLASweepNow()"></button>
+              <button id="officialLogoutBtn" onclick="logoutOfficial()"></button>
+            </div>
           </div>
 
-          <div class="control-actions">
-            <!-- On-demand SLA Engine Sweep Trigger -->
-            <button id="triggerSlaBtn" class="btn btn-warning btn-electric" onclick="triggerSLASweepNow()">
-              <span class="btn-icon">⚡</span>
-              <span data-i18n="triggerSla">Run SLA Escalation Engine</span>
-            </button>
+          <!-- Executive KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-blue">
+              <div class="kpi-icon icon-blue">📂</div>
+              <div class="kpi-body">
+                <div class="kpi-val" id="kpiTotal">0</div>
+                <div class="kpi-title" data-i18n="kpiTotal">Total Ingested Grievances</div>
+                <div class="kpi-tag">Global Ingestion</div>
+              </div>
+            </div>
 
-            <!-- Official Sign Out Button -->
-            <button id="officialLogoutBtn" class="btn btn-secondary btn-sm" onclick="logoutOfficial()" title="Sign out and lock official session">
-              <span class="btn-icon">🚪</span>
-              <span data-i18n="signOut">Sign Out</span>
-            </button>
+            <div class="kpi-card kpi-yellow">
+              <div class="kpi-icon icon-yellow">⏳</div>
+              <div class="kpi-body">
+                <div class="kpi-val" id="kpiActive">0</div>
+                <div class="kpi-title" data-i18n="kpiActive">Active In-Flight Cases</div>
+                <div class="kpi-tag">Live Timers Active</div>
+              </div>
+            </div>
+
+            <div class="kpi-card kpi-red alert-kpi">
+              <div class="kpi-icon icon-red">🚨</div>
+              <div class="kpi-body">
+                <div class="kpi-val text-red" id="kpiBreached">0</div>
+                <div class="kpi-title" data-i18n="kpiBreached">Breached SLA Thresholds</div>
+                <div class="kpi-tag tag-alert">Auto-Escalating</div>
+              </div>
+            </div>
+
+            <div class="kpi-card kpi-purple">
+              <div class="kpi-icon icon-purple">🏛️</div>
+              <div class="kpi-body">
+                <div class="kpi-val" id="kpiEscalated">0</div>
+                <div class="kpi-title" data-i18n="kpiEscalated">Tier Escalations (Sub-City/City)</div>
+                <div class="kpi-tag">Multi-Tier Escalation</div>
+              </div>
+            </div>
+
+            <div class="kpi-card kpi-green">
+              <div class="kpi-icon icon-green">✅</div>
+              <div class="kpi-body">
+                <div class="kpi-val text-green" id="kpiResolved">0</div>
+                <div class="kpi-title" data-i18n="kpiResolved">Certified Resolutions</div>
+                <div class="kpi-tag tag-success">Ledger Signed</div>
+              </div>
+            </div>
           </div>
-        </div>
-
-      <!-- Executive KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card kpi-blue">
-          <div class="kpi-icon icon-blue">📂</div>
-          <div class="kpi-body">
-            <div class="kpi-val" id="kpiTotal">0</div>
-            <div class="kpi-title" data-i18n="kpiTotal">Total Ingested Grievances</div>
-            <div class="kpi-tag">Global Ingestion</div>
-          </div>
-        </div>
-
-        <div class="kpi-card kpi-yellow">
-          <div class="kpi-icon icon-yellow">⏳</div>
-          <div class="kpi-body">
-            <div class="kpi-val" id="kpiActive">0</div>
-            <div class="kpi-title" data-i18n="kpiActive">Active In-Flight Cases</div>
-            <div class="kpi-tag">Live Timers Active</div>
-          </div>
-        </div>
-
-        <div class="kpi-card kpi-red alert-kpi">
-          <div class="kpi-icon icon-red">🚨</div>
-          <div class="kpi-body">
-            <div class="kpi-val text-red" id="kpiBreached">0</div>
-            <div class="kpi-title" data-i18n="kpiBreached">Breached SLA Thresholds</div>
-            <div class="kpi-tag tag-alert">Auto-Escalating</div>
-          </div>
-        </div>
-
-        <div class="kpi-card kpi-purple">
-          <div class="kpi-icon icon-purple">🏛️</div>
-          <div class="kpi-body">
-            <div class="kpi-val" id="kpiEscalated">0</div>
-            <div class="kpi-title" data-i18n="kpiEscalated">Tier Escalations (Sub-City/City)</div>
-            <div class="kpi-tag">Multi-Tier Escalation</div>
-          </div>
-        </div>
-
-        <div class="kpi-card kpi-green">
-          <div class="kpi-icon icon-green">✅</div>
-          <div class="kpi-body">
-            <div class="kpi-val text-green" id="kpiResolved">0</div>
-            <div class="kpi-title" data-i18n="kpiResolved">Certified Resolutions</div>
-            <div class="kpi-tag tag-success">Ledger Signed</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Official Sub-Tabs -->
-      <div class="official-tab-nav">
-        <button id="offTabCases" class="tab-btn active" onclick="showOfficialTab('cases')">
-          <span class="tab-icon">🗂️</span>
-          <span data-i18n="grievanceQueue">Case Review Queue</span>
-        </button>
-        <button id="offTabHearings" class="tab-btn" onclick="showOfficialTab('hearings')">
-          <span class="tab-icon">📅</span>
-          <span data-i18n="hearingDesk">Wed & Fri Digital Hearings</span>
-        </button>
-        <button id="offTabCalendar" class="tab-btn" onclick="showOfficialTab('calendar')">
-          <span class="tab-icon">🗓️</span>
-          <span data-i18n="officialCalendar">Civic Calendar & Holidays</span>
-        </button>
-        <button id="offTabHeatmap" class="tab-btn" onclick="showOfficialTab('heatmap')">
-          <span class="tab-icon">📊</span>
-          <span data-i18n="bottleneckHeatmap">Administrative Bottleneck Heatmap</span>
-        </button>
-        <button id="offTabAudit" class="tab-btn" onclick="showOfficialTab('audit')">
-          <span class="tab-icon">📜</span>
-          <span data-i18n="auditLedger">Immutable Audit Ledger</span>
-        </button>
-        <button id="offTabUsers" class="tab-btn" onclick="showOfficialTab('users')">
-          <span class="tab-icon">👥</span>
-          <span data-i18n="staffManagement">Staff & RBAC Accounts</span>
-        </button>
-      </div>
 
       <!-- TAB: CASE QUEUE -->
       <div id="offCasesTab" class="tab-content active">
@@ -952,7 +1009,7 @@
             </table>
           </div>
         </div>
-      </div>
+        </div> <!-- end .official-main-content -->
       </div> <!-- end #officialDashboardView -->
     </section>
 

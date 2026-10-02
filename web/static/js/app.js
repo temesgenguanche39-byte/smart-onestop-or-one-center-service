@@ -662,6 +662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkExistingSession();
   await checkGatewayHealth();
   initDatePickerDefaults();
+  initSidebar();
 });
 
 // Civic Date Formatting Helper (Bilingual EN/አማርኛ & Ethiopian Calendar)
@@ -726,6 +727,9 @@ function setLanguage(lang) {
     document.body.classList.remove('amharic-mode');
   }
 
+  // Update dynamic topbar title in current language
+  updateOfficialTopbarTitle();
+
   // Update dynamic calendar views & badges to reflect language immediately
   if (window.CivicCalendar && document.getElementById('offCalendarTab') && document.getElementById('offCalendarTab').classList.contains('active')) {
     window.CivicCalendar.initCalendarPage();
@@ -768,14 +772,166 @@ function showOfficialTab(tab) {
   tabs.forEach(t => {
     const btn = document.getElementById('offTab' + capitalize(t));
     const content = document.getElementById('off' + capitalize(t) + 'Tab');
+    const sideNavBtn = document.getElementById('sideNav' + capitalize(t));
+
     if (btn) btn.classList.toggle('active', t === tab);
+    if (sideNavBtn) sideNavBtn.classList.toggle('active', t === tab);
     if (content) content.classList.toggle('active', t === tab);
   });
+
+  // Update command bar title & subtitle
+  updateOfficialTopbarTitle(tab);
+
+  // Auto-close mobile drawer if on small viewport (< 768px)
+  if (window.innerWidth <= 768) {
+    toggleSidebar(false);
+  }
+
   if (tab === 'users') {
     loadOfficialUsers();
   }
   if (tab === 'calendar' && window.CivicCalendar) {
     window.CivicCalendar.initCalendarPage();
+  }
+}
+
+function updateOfficialTopbarTitle(tab) {
+  const titleEl = document.getElementById('officialActiveViewTitle');
+  const subEl = document.getElementById('officialActiveViewSubtitle');
+  if (!titleEl) return;
+
+  const currentTab = tab || getCurrentActiveOfficialTab() || 'cases';
+  const isAm = (typeof currentLang !== 'undefined' && currentLang === 'am');
+
+  const titles = {
+    cases: { en: 'Case Review Queue', am: 'የጉዳዮች ዝርዝር ማዕከል', subEn: 'Authorized Civic Dispute Processing', subAm: 'የተመዘገቡ ቅሬታዎች መመርመሪያና ማስተናገጃ' },
+    hearings: { en: 'Digital Hearings Desk', am: 'የዲጂታል ችሎቶች ማዕከል', subEn: 'Wed & Fri Remote Civic Sessions', subAm: 'የዕሮብ እና አርብ የቪዲዮ ችሎቶች' },
+    calendar: { en: 'Civic Calendar & Public Holidays', am: '13-ወር የህዝብ መቁጠሪያና በዓላት', subEn: 'Official Working-Day Engine Schedule', subAm: 'የስራ ቀናትና ይፋዊ በዓላት መቁጠሪያ' },
+    heatmap: { en: 'Administrative Bottleneck Heatmap', am: 'የአስተዳደራዊ ክፍተቶች መረጃ', subEn: 'Sub-City & Woreda SLA Analytics', subAm: 'የክፍለ ከተማና ወረዳዎች የስራ አፈጻጸም' },
+    audit: { en: 'Immutable Audit Ledger', am: 'የማይለወጥ የታሪክ መዝገብ', subEn: 'Cryptographically Verifiable Ledger', subAm: 'በምስጠራ የተረጋገጠ የክንውን መዝገብ' },
+    users: { en: 'Staff & RBAC Accounts', am: 'የሰራተኞችና ፍቃድ ማዕከል', subEn: 'Jurisdiction & Access Control', subAm: 'የስራ ድርሻና የስልጣን ወሰን መቆጣጠሪያ' }
+  };
+
+  const info = titles[currentTab] || titles.cases;
+  titleEl.textContent = isAm ? info.am : info.en;
+  if (subEl) {
+    subEl.textContent = isAm ? info.subAm : info.subEn;
+  }
+}
+
+function getCurrentActiveOfficialTab() {
+  const tabs = ['cases', 'hearings', 'calendar', 'heatmap', 'audit', 'users'];
+  for (const t of tabs) {
+    const sideBtn = document.getElementById('sideNav' + capitalize(t));
+    if (sideBtn && sideBtn.classList.contains('active')) return t;
+    const content = document.getElementById('off' + capitalize(t) + 'Tab');
+    if (content && content.classList.contains('active')) return t;
+  }
+  return 'cases';
+}
+
+// ==============================================================================
+// PHASE 4: STAFF COLLAPSIBLE SIDEBAR NAVIGATION & STATE MANAGEMENT
+// ==============================================================================
+const SIDEBAR_STORAGE_KEY = 'smart_onestop_sidebar_collapsed';
+
+function initSidebar() {
+  const sidebar = document.getElementById('staffSidebar');
+  if (!sidebar) return;
+
+  // Restore persisted collapsed state (desktop / tablet only)
+  const isCollapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
+  if (isCollapsed && window.innerWidth > 768) {
+    sidebar.classList.add('collapsed');
+    updateSidebarAria(true);
+  } else {
+    sidebar.classList.remove('collapsed');
+    updateSidebarAria(false);
+  }
+
+  // Keyboard shortcut listener: Ctrl+B / Cmd+B to toggle collapse, Escape to close mobile drawer
+  document.addEventListener('keydown', (e) => {
+    // Escape key closes mobile drawer
+    if (e.key === 'Escape') {
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (backdrop && backdrop.classList.contains('active')) {
+        toggleSidebar(false);
+        return;
+      }
+    }
+
+    // Ctrl+B or Cmd+B to toggle collapse/expand
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+      const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      e.preventDefault();
+      if (window.innerWidth <= 768) {
+        const isOpen = sidebar.classList.contains('drawer-open');
+        toggleSidebar(!isOpen);
+      } else {
+        toggleSidebarCollapse();
+      }
+    }
+  });
+
+  // Touch swipe support to close mobile drawer
+  let touchStartX = 0;
+  let touchEndX = 0;
+  sidebar.addEventListener('touchstart', (e) => {
+    if (e.changedTouches && e.changedTouches[0]) {
+      touchStartX = e.changedTouches[0].screenX;
+    }
+  }, { passive: true });
+
+  sidebar.addEventListener('touchend', (e) => {
+    if (e.changedTouches && e.changedTouches[0]) {
+      touchEndX = e.changedTouches[0].screenX;
+      // Swipe left by more than 50px closes drawer
+      if (touchStartX - touchEndX > 50 && sidebar.classList.contains('drawer-open')) {
+        toggleSidebar(false);
+      }
+    }
+  }, { passive: true });
+}
+
+function updateSidebarAria(collapsed) {
+  const sidebar = document.getElementById('staffSidebar');
+  const toggleBtn = document.getElementById('sidebarCollapseBtn');
+  if (sidebar) {
+    sidebar.setAttribute('aria-expanded', String(!collapsed));
+  }
+  if (toggleBtn) {
+    toggleBtn.setAttribute('aria-label', collapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)');
+    toggleBtn.setAttribute('title', collapsed ? 'Expand Sidebar (Ctrl+B)' : 'Collapse Sidebar (Ctrl+B)');
+  }
+}
+
+function toggleSidebarCollapse() {
+  const sidebar = document.getElementById('staffSidebar');
+  if (!sidebar) return;
+  const isNowCollapsed = sidebar.classList.toggle('collapsed');
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isNowCollapsed));
+  updateSidebarAria(isNowCollapsed);
+}
+
+function toggleSidebar(open) {
+  const sidebar = document.getElementById('staffSidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!sidebar) return;
+
+  const shouldOpen = open !== undefined ? open : !sidebar.classList.contains('drawer-open');
+
+  if (shouldOpen) {
+    sidebar.classList.add('drawer-open');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    const activeItem = sidebar.querySelector('.sidebar-nav-item.active') || sidebar.querySelector('.sidebar-nav-item');
+    if (activeItem) activeItem.focus();
+  } else {
+    sidebar.classList.remove('drawer-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.style.overflow = '';
   }
 }
 
@@ -1698,6 +1854,17 @@ function updateAuthUI(isAuthenticated) {
     if (avatarEl) avatarEl.textContent = avatar;
     if (navSessionAvatar) navSessionAvatar.textContent = avatar;
 
+    // Sidebar profile card (Phase 4)
+    const sideNameEl = document.getElementById('sidebarOfficerName');
+    const sideRoleEl = document.getElementById('sidebarOfficerRole');
+    const sideStructEl = document.getElementById('sidebarOfficerStruct');
+    const sideAvatarEl = document.getElementById('sidebarOfficerAvatar');
+
+    if (sideNameEl) sideNameEl.textContent = currentUser.full_name;
+    if (sideRoleEl) sideRoleEl.textContent = currentUser.role;
+    if (sideStructEl) sideStructEl.textContent = jurisdictionBadgeText;
+    if (sideAvatarEl) sideAvatarEl.textContent = avatar;
+
     // Update Case Queue Active Jurisdiction Scoping Banner
     updateCaseQueueJurisdictionBanner(currentUser);
 
@@ -1715,6 +1882,16 @@ function updateAuthUI(isAuthenticated) {
     if (loginGate) loginGate.classList.remove('hidden');
     if (dashView) dashView.classList.add('hidden');
     if (navSessionBadge) navSessionBadge.classList.add('hidden');
+
+    const sideNameEl = document.getElementById('sidebarOfficerName');
+    const sideRoleEl = document.getElementById('sidebarOfficerRole');
+    const sideStructEl = document.getElementById('sidebarOfficerStruct');
+    const sideAvatarEl = document.getElementById('sidebarOfficerAvatar');
+
+    if (sideNameEl) sideNameEl.textContent = 'Official User';
+    if (sideRoleEl) sideRoleEl.textContent = 'OFFICIAL';
+    if (sideStructEl) sideStructEl.textContent = 'Municipal Gateway';
+    if (sideAvatarEl) sideAvatarEl.textContent = '⚖️';
   }
 }
 
@@ -1929,6 +2106,12 @@ async function loadExecutiveKPIs() {
     document.getElementById('kpiEscalated').textContent = data.escalated_to_subcity + data.escalated_to_city;
     document.getElementById('kpiResolved').textContent = data.resolved_cases;
 
+    // Update Phase 4 Sidebar live badge
+    const sideBadge = document.getElementById('sideBadgeCases');
+    if (sideBadge && data.active_cases !== undefined) {
+      sideBadge.textContent = data.active_cases;
+    }
+
     // Update Hero stats
     document.getElementById('heroActiveCases').textContent = data.active_cases;
     document.getElementById('heroBreachedCases').textContent = data.breached_cases;
@@ -2017,6 +2200,11 @@ async function loadOfficialCases() {
     const data = await res.json();
     allCases = data.data || [];
     renderCasesTable(allCases);
+
+    const sideBadge = document.getElementById('sideBadgeCases');
+    if (sideBadge) {
+      sideBadge.textContent = allCases.length;
+    }
 
   } catch (err) {
     console.error("Failed to load cases:", err);
