@@ -98,6 +98,15 @@ services:
       redis:
         condition: service_healthy
 
+  # 6. Cloudflare Zero-Trust Edge Tunnel (Transparent CORS, Zero 511 errors)
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: smart_onestop_tunnel
+    restart: always
+    command: ["tunnel", "--url", "http://api:8080", "--no-autoupdate"]
+    depends_on:
+      - api
+
 volumes:
   pgdata:
   redisdata:

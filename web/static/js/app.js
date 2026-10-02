@@ -26,7 +26,8 @@ const SESSION_USER_KEY = 'smart_onestop_user';
 // ============================================================================
 const API_BASE_KEY = 'smart_onestop_api_base';
 
-const LIVE_GATEWAY_URL = 'https://sixty-bats-shout.loca.lt';
+// Live Zero-Trust Edge Gateway (Cloudflare Tunnel: Transparent CORS, Zero 511 Errors)
+const LIVE_GATEWAY_URL = 'https://deputy-grain-strength-cyber.trycloudflare.com';
 
 function getApiBase() {
   // 1. Check URL parameters: ?api=... or ?api_base=... or ?backend=...
@@ -42,10 +43,15 @@ function getApiBase() {
     console.warn("Could not parse search params:", e);
   }
 
-  // 2. Check localStorage
+  // 2. Check localStorage & auto-migrate from dead loca.lt tunnels
   try {
     const stored = localStorage.getItem(API_BASE_KEY);
     if (stored && stored.trim() !== '') {
+      if (stored.includes('loca.lt')) {
+        // Auto-migrate from deprecated localtunnel to Cloudflare Edge
+        localStorage.setItem(API_BASE_KEY, LIVE_GATEWAY_URL);
+        return LIVE_GATEWAY_URL;
+      }
       return stored.trim().replace(/\/+$/, '');
     }
   } catch (e) {
@@ -57,7 +63,7 @@ function getApiBase() {
     return window.ENV.API_BASE.trim().replace(/\/+$/, '');
   }
 
-  // 4. If running on Vercel cloud, connect directly to the live municipal tunnel
+  // 4. If running on Vercel cloud, connect directly to the live municipal edge tunnel
   if (window.location && window.location.hostname && window.location.hostname.includes('vercel.app')) {
     return LIVE_GATEWAY_URL;
   }
@@ -88,8 +94,7 @@ async function testApiConnection(customUrl) {
   try {
     const res = await fetch(testUrl, {
       method: 'GET',
-      mode: 'cors',
-      headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      mode: 'cors'
     });
     const latency = Math.round(performance.now() - startTime);
     if (res.ok) {
@@ -949,7 +954,6 @@ async function renderTicketResult(rawQuery) {
   let foundData = null;
   try {
     const tunnelHeaders = {
-      'Bypass-Tunnel-Reminder': 'true',
       'Accept': 'application/json'
     };
     let res;
