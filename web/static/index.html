@@ -4,17 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>City Grievance & Public Service Resolution Portal | የአዲስ አበባ ከተማ አስተዳደር</title>
+  
+  <!-- Typography: Noto Sans Ethiopic + Noto Sans + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Core Civic Government Design System -->
   <link rel="stylesheet" href="/static/css/style.css">
+  
   <!-- QR Code generation library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body class="theme-light">
 
   <!-- ========================================================================= -->
-  <!-- 1. OFFICIAL CITIZEN BANNER (TOP MASTHEAD)                                 -->
+  <!-- 0. ACCESSIBILITY SKIP NAVIGATION LINK (WCAG 2.2 AA)                       -->
+  <!-- ========================================================================= -->
+  <a href="#main-content" class="skip-link">Skip to main content / ወደ ዋና ይዘት ይለፉ</a>
+
+  <!-- ========================================================================= -->
+  <!-- 1. OFFICIAL CITIZEN MASTHEAD (TOP GOVERNMENT BANNER)                      -->
   <!-- ========================================================================= -->
   <div class="gov-masthead" id="govMasthead">
     <div class="gov-masthead-container">
@@ -71,19 +81,41 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 2. MAIN TOP NAVIGATION                                                    -->
+  <!-- 2. MAIN INSTITUTIONAL GOVERNMENT NAVIGATION                               -->
   <!-- ========================================================================= -->
-  <header class="navbar civic-gov-nav">
+  <header class="navbar civic-gov-nav" role="banner">
     <div class="nav-container">
-      <div class="nav-brand" onclick="showCitizenTab('intake')" style="cursor: pointer;" title="Smart Municipal Service Center">
+      <div class="nav-brand" onclick="showCitizenTab('intake')" style="cursor: pointer;" title="Addis Ababa City Administration">
         <div class="brand-crest-box">
           <span class="crest-icon">🏛️</span>
         </div>
         <div class="brand-text">
-          <h1 class="brand-title" data-i18n="platformBrandTitle">Smart Municipal Service Center</h1>
-          <p class="brand-subtitle amharic-text" data-i18n="platformBrandSubtitle">የአዲስ አበባ ከተማ አስተዳደር የቅሬታ ማቅረቢያ መድረክ</p>
+          <h1 class="brand-title" data-i18n="platformBrandTitle">Addis Ababa City Administration</h1>
+          <p class="brand-subtitle amharic-text" data-i18n="platformBrandSubtitle">የአዲስ አበባ ከተማ አስተዳደር የቅሬታና የህዝብ አገልግሎት መድረክ</p>
         </div>
       </div>
+
+      <!-- Modern Citizen Navigation Links -->
+      <nav class="civic-nav-links" aria-label="Citizen Navigation">
+        <button type="button" class="civic-nav-link active" onclick="showCitizenTab('intake')">
+          <span data-i18n="navHome">Home</span>
+        </button>
+        <button type="button" class="civic-nav-link" onclick="showCitizenTab('intake')">
+          <span data-i18n="navSubmit">Submit Grievance</span>
+        </button>
+        <button type="button" class="civic-nav-link" onclick="showCitizenTab('track')">
+          <span data-i18n="navTrack">Track Grievance</span>
+        </button>
+        <a href="#citizenServices" class="civic-nav-link" style="text-decoration:none;">
+          <span data-i18n="navServices">Public Services</span>
+        </a>
+        <button type="button" class="civic-nav-link" onclick="openOfficialInfoModal()">
+          <span data-i18n="navHelp">Help</span>
+        </button>
+        <a href="#aboutSection" class="civic-nav-link" style="text-decoration:none;">
+          <span data-i18n="navAbout">About</span>
+        </a>
+      </nav>
 
       <div class="nav-actions">
         <!-- Public Citizen Track Action -->
@@ -120,22 +152,28 @@
     </div>
   </header>
 
-  <!-- MAIN APP CONTAINER -->
-  <main class="main-wrapper">
+  <!-- ========================================================================= -->
+  <!-- MAIN APP CONTAINER                                                        -->
+  <!-- ========================================================================= -->
+  <main class="main-wrapper" id="main-content" role="main">
 
     <!-- ========================================================================= -->
     <!-- CITIZEN PORTAL SECTION                                                    -->
     <!-- ========================================================================= -->
-    <section id="citizenSection" class="portal-section active">
+    <section id="citizenSection" class="portal-section active" aria-labelledby="heroTitle">
+      
       <!-- 3. HERO & CIVIC INFORMATION ARCHITECTURE -->
       <div class="hero-civic-card">
         <div class="hero-civic-badge">
           <span class="civic-badge-dot"></span>
           <span data-i18n="activeServiceStatus">Addis Ababa City Administration • Official Public Service Portal</span>
         </div>
-        <h1 class="hero-civic-title" data-i18n="heroTitle">City Grievance & Public Service Resolution Portal</h1>
+        <h1 class="hero-civic-title" id="heroTitle" data-i18n="heroTitle">City Grievance & Public Service Resolution Portal</h1>
+        <div class="hero-amharic-sub amharic-text" data-i18n="heroSubtitleAm" style="font-size:1.35rem; font-weight:700; color:var(--color-primary); margin-top:-0.2rem; margin-bottom:0.75rem;">
+          የከተማ ቅሬታና የህዝብ አገልግሎት መፍትሄ መድረክ
+        </div>
         <p class="hero-civic-desc" data-i18n="heroDesc">
-          Submit municipal issues directly to your Sub-City or Woreda administration. Track your case progress with transparent, binding resolution timelines.
+          Submit municipal issues directly to your Sub-City or Woreda administration. Track your case progress with transparent, binding resolution timelines, receive verified updates, and communicate directly with responsible government offices.
         </p>
 
         <div class="hero-cta-group">
@@ -149,7 +187,7 @@
           </button>
         </div>
 
-        <!-- Single Structured Public Service Transparency Strip (Replacing 4 disconnected boxes) -->
+        <!-- Single Structured Public Service Transparency Strip -->
         <div class="civic-transparency-strip">
           <div class="transparency-item">
             <div class="transparency-metric" id="stripResolutionRate">98.4%</div>
@@ -171,22 +209,86 @@
             <div class="transparency-label" data-i18n="stripSlaLabel">Deterministic SLA Guarantee</div>
           </div>
         </div>
+
+        <!-- Hidden counters preserved for dynamic JS compatibility -->
+        <span id="heroActiveCases" class="hidden">0</span>
+        <span id="heroBreachedCases" class="hidden">0</span>
       </div>
 
-      <!-- Citizen Navigation Tabs -->
-      <div class="tab-nav">
-        <button id="citizenTabIntake" class="tab-btn active" onclick="showCitizenTab('intake')">
+      <!-- ======================================================================= -->
+      <!-- 4. CITIZEN SERVICE CARDS GRID (4 MODULAR INSTITUTIONAL SERVICES)        -->
+      <!-- ======================================================================= -->
+      <section id="citizenServices" class="citizen-services-section" aria-labelledby="citizenServicesHeading">
+        <div class="citizen-services-heading">
+          <h3 id="citizenServicesHeading" data-i18n="citizenServicesHeading">Public Municipal Services & Resolution Protocols</h3>
+          <span style="font-size:0.82rem; color:var(--color-muted);">የአዲስ አበባ ከተማ ማዘጋጃ ቤት አገልግሎቶች</span>
+        </div>
+        
+        <div class="citizen-service-grid">
+          <!-- Card 1: Submit Grievance -->
+          <article class="service-card">
+            <div class="service-card-icon">📝</div>
+            <h4 class="service-card-title">Submit a Grievance</h4>
+            <div class="service-card-sub amharic-text">አቤቱታ ያስገቡ</div>
+            <p class="service-card-desc">Report a public-service issue, land dispute, or administrative delay and receive a legally protected tracking ticket.</p>
+            <button type="button" class="service-card-btn" onclick="showCitizenTab('intake')">
+              <span>Submit Now</span> <span>→</span>
+            </button>
+          </article>
+
+          <!-- Card 2: Track Case Status -->
+          <article class="service-card">
+            <div class="service-card-icon">🔎</div>
+            <h4 class="service-card-title">Track Grievance</h4>
+            <div class="service-card-sub amharic-text">አቤቱታ ይከታተሉ</div>
+            <p class="service-card-desc">Monitor live statutory SLA countdowns, review assigned investigation tiers, and verify official stamps.</p>
+            <button type="button" class="service-card-btn" onclick="showCitizenTab('track')">
+              <span>Track Now</span> <span>→</span>
+            </button>
+          </article>
+
+          <!-- Card 3: Digital Dispute Hearings -->
+          <article class="service-card">
+            <div class="service-card-icon">⚖️</div>
+            <h4 class="service-card-title">Digital Hearing Desk</h4>
+            <div class="service-card-sub amharic-text">የዲጂታል ችሎት</div>
+            <p class="service-card-desc">Virtual dispute hearings held every Wednesday and Friday, connecting citizens and Sub-City arbiters securely.</p>
+            <button type="button" class="service-card-btn" onclick="openOfficialInfoModal()">
+              <span>View Protocol</span> <span>→</span>
+            </button>
+          </article>
+
+          <!-- Card 4: Service Charter -->
+          <article class="service-card">
+            <div class="service-card-icon">📜</div>
+            <h4 class="service-card-title">Public Service Charter</h4>
+            <div class="service-card-sub amharic-text">የአገልግሎት አሰጣጥ ቻርተር</div>
+            <p class="service-card-desc">Transparent municipal service standards, statutory response limits, and administrative escalation pathways.</p>
+            <button type="button" class="service-card-btn" onclick="openOfficialInfoModal()">
+              <span>Explore Standards</span> <span>→</span>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ======================================================================= -->
+      <!-- 5. CITIZEN TAB SWITCHER                                                 -->
+      <!-- ======================================================================= -->
+      <div class="tab-nav" role="tablist">
+        <button id="citizenTabIntake" class="tab-btn active" role="tab" aria-selected="true" aria-controls="citizenIntakeTab" onclick="showCitizenTab('intake')">
           <span class="tab-icon">📥</span>
           <span data-i18n="newComplaint">File New Grievance</span>
         </button>
-        <button id="citizenTabTrack" class="tab-btn" onclick="showCitizenTab('track')">
+        <button id="citizenTabTrack" class="tab-btn" role="tab" aria-selected="false" aria-controls="citizenTrackTab" onclick="showCitizenTab('track')">
           <span class="tab-icon">🔎</span>
           <span data-i18n="trackExisting">Track Status & Hearing Slot</span>
         </button>
       </div>
 
-      <!-- TAB 1: CITIZEN INTAKE FORM (OFFICIAL 3-STEP WIZARD) -->
-      <div id="citizenIntakeTab" class="tab-content active">
+      <!-- ======================================================================= -->
+      <!-- TAB 1: CITIZEN INTAKE FORM (OFFICIAL 3-STEP WIZARD)                     -->
+      <!-- ======================================================================= -->
+      <div id="citizenIntakeTab" class="tab-content active" role="tabpanel" aria-labelledby="citizenTabIntake">
         <div class="card form-card">
           <div class="card-header">
             <div class="brand-crest-box" style="width:42px; height:42px; font-size:1.2rem;">📋</div>
@@ -196,7 +298,7 @@
             </div>
           </div>
 
-          <!-- 4. PROGRESS STEPPER (Clean Horizontal Process Bar with Semantic Stages & Checkmarks) -->
+          <!-- PROGRESS STEPPER -->
           <div class="civic-stepper-bar">
             <div id="formStepIndicator1" class="civic-step-item active" onclick="setFormStep(1)">
               <div class="civic-step-badge">
@@ -343,7 +445,7 @@
                   <textarea id="grievanceDescription" class="form-textarea" rows="4" required placeholder="Explain clearly the administrative delay, previous visits, official names, and requested remedy..."></textarea>
                 </div>
 
-                <!-- 5. DOCUMENT INTAKE (Modern Drag-and-Drop Zone with Spec Chips & Virus Scanning) -->
+                <!-- DOCUMENT INTAKE -->
                 <div class="form-group span-2">
                   <label data-i18n="evidenceUpload">Supporting Evidence (Contracts, Denials, Audio Note)</label>
                   <div class="civic-dropzone-wrapper">
@@ -369,7 +471,7 @@
                     <div id="selectedFilesList" class="file-preview-grid"></div>
                   </div>
 
-                  <!-- 5. CITIZEN VOICE MEMO (Accessible State with Wave Visualizer, Timer & Playback) -->
+                  <!-- CITIZEN VOICE MEMO STUDIO -->
                   <div class="civic-voice-studio">
                     <div class="voice-studio-top">
                       <div class="voice-badge">
@@ -432,8 +534,10 @@
         </div>
       </div>
 
-      <!-- TAB 2: CITIZEN TRACKING & QR VERIFICATION -->
-      <div id="citizenTrackTab" class="tab-content">
+      <!-- ======================================================================= -->
+      <!-- TAB 2: CITIZEN TRACKING & QR VERIFICATION                               -->
+      <!-- ======================================================================= -->
+      <div id="citizenTrackTab" class="tab-content" role="tabpanel" aria-labelledby="citizenTabTrack">
         <div class="card track-card">
           <div class="card-header">
             <div class="card-header-icon">🔎</div>
@@ -455,7 +559,7 @@
 
           <!-- Search Result Display -->
           <div id="trackResultContainer" class="track-result-container hidden">
-            <!-- Dynamic Result Card Injected Here -->
+            <!-- Dynamic Result Card Injected Here via app.js -->
           </div>
         </div>
       </div>
@@ -464,21 +568,21 @@
     <!-- ========================================================================= -->
     <!-- OFFICIAL COMMAND CENTER SECTION                                           -->
     <!-- ========================================================================= -->
-    <section id="officialSection" class="portal-section">
+    <section id="officialSection" class="portal-section" aria-labelledby="officialCommandHeading">
 
       <!-- 1. OFFICIAL LOGIN GATE (Protected Access) -->
       <div id="officialLoginGate" class="login-gate-card">
         <div class="login-crest-wrap">
           <div class="login-crest">🏛️</div>
         </div>
-        <h2 class="login-title" data-i18n="loginTitle">Municipal Staff Authentication</h2>
+        <h2 class="login-title" id="officialCommandHeading" data-i18n="loginTitle">Municipal Staff Authentication</h2>
         <div class="login-subtitle" data-i18n="loginSubtitle">Official Command Center & Digital Hearing Desk</div>
         <p class="login-desc" data-i18n="loginDesc">
           Authorized personnel only. Access hearing schedules, manage escalated grievances, and sign immutable resolutions.
         </p>
 
         <!-- Error Message Alert -->
-        <div id="loginErrorAlert" class="alert-banner" style="margin-bottom: 1.25rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem;">
+        <div id="loginErrorAlert" class="alert-banner" style="margin-bottom: 1.25rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #B91C1C; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.1rem;">⚠️</span>
           <span id="loginErrorMsg">Invalid official credentials.</span>
         </div>
@@ -511,6 +615,11 @@
               <input type="checkbox" id="rememberMeCheckbox" checked>
               <span data-i18n="rememberMe">Keep me signed in</span>
             </label>
+            
+            <!-- Quick Role Select Preserved for Demo Switcher -->
+            <select id="roleSwitchSelect" class="form-input form-input-sm" style="max-width:210px; display:none;" onchange="if(this.value) { document.getElementById('loginEmail').value = this.value; }">
+              <option value="">Quick Select Officer</option>
+            </select>
           </div>
 
           <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-glow login-btn">
@@ -611,7 +720,7 @@
               </button>
               <div class="topbar-context-title">
                 <h2 id="officialActiveViewTitle" style="font-size:1.15rem; font-weight:800; margin:0;">Case Review Queue</h2>
-                <span style="font-size:0.75rem; color:var(--text-secondary);" id="officialActiveViewSubtitle">Authorized Civic Dispute Processing</span>
+                <span style="font-size:0.75rem; color:var(--color-muted);" id="officialActiveViewSubtitle">Authorized Civic Dispute Processing</span>
               </div>
             </div>
             <div class="topbar-actions">
@@ -686,329 +795,331 @@
             </div>
           </div>
 
-      <!-- TAB: CASE QUEUE -->
-      <div id="offCasesTab" class="tab-content active">
-        <div class="card">
-          <!-- Active RBAC Jurisdiction Scoping Indicator -->
-          <div id="activeJurisdictionBanner" class="jurisdiction-scope-bar" style="margin-bottom: 1.25rem; padding: 0.85rem 1.15rem; border-radius: 10px; background: linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.4)); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: space-between; font-size: 0.88rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <span id="jurisdictionBadgeIcon" style="font-size: 1.4rem;">🏛️</span>
-              <div>
-                <strong id="jurisdictionScopeTitle" style="color: var(--cyan-400);">የስልጣን ወሰን ማጣሪያ (RBAC Scoping):</strong>
-                <span id="jurisdictionScopeText" style="color: #cbd5e1; margin-left: 0.35rem;">በተመደቡበት ክፍለ ከተማና ወረዳ ብቻ የተገደበ (Scoped to Authorized Jurisdiction)</span>
-              </div>
-            </div>
-            <span id="jurisdictionBadgeTier" class="officer-struct-badge" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #7dd3fc; font-weight: 700; letter-spacing: 0.05em;">WOREDA TIER</span>
-          </div>
-
-          <div class="card-toolbar">
-            <div class="search-wrap">
-              <input type="text" id="officialSearchInput" class="form-input form-input-sm" placeholder="Search ticket #, citizen, title..." onkeyup="filterCasesTable()">
-            </div>
-            <div class="filter-group">
-              <select id="filterStatusSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
-                <option value="">All Statuses</option>
-                <option value="SUBMITTED">SUBMITTED</option>
-                <option value="UNDER_REVIEW">UNDER REVIEW</option>
-                <option value="SCHEDULED_FOR_HEARING">SCHEDULED FOR HEARING</option>
-                <option value="ESCALATED_TO_SUBCITY">ESCALATED TO SUBCITY</option>
-                <option value="ESCALATED_TO_CITY">ESCALATED TO CITY</option>
-                <option value="RESOLVED">RESOLVED</option>
-              </select>
-              <select id="filterBreachSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
-                <option value="">All Deadlines</option>
-                <option value="true">Breached SLA Only</option>
-              </select>
-              <button class="btn btn-secondary btn-sm" onclick="loadOfficialCases()">
-                <span>🔄 Refresh</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Ticket #</th>
-                  <th>Citizen & Phone</th>
-                  <th>Classification</th>
-                  <th>Current Tier</th>
-                  <th>SLA Countdown</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="casesTableBody">
-                <!-- Cases dynamically populated here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: WEDNESDAY & FRIDAY DIGITAL HEARINGS -->
-      <div id="offHearingsTab" class="tab-content">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-icon">⚖️</div>
-            <div>
-              <h2 class="card-title" data-i18n="hearingTitle">Digital Hearing Desk (Wednesdays & Fridays)</h2>
-              <p class="card-subtitle" data-i18n="hearingSubtitle">In-app virtual hearing room scheduler replacing in-person office queues per municipal protocol.</p>
-            </div>
-          </div>
-
-          <div class="hearings-desk-grid">
-            <div class="hearing-calendar-sidebar">
-              <label class="form-label" data-i18n="selectHearingDay">Select Presiding Hearing Session:</label>
-              <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
-                <input type="date" id="hearingDatePicker" class="form-input" onchange="loadHearingsForDate()" style="flex:1;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('hearingDatePicker'), { hearingOnly: true, onSelect: () => loadHearingsForDate() })" title="Pick Ethiopian Hearing Date (Wed/Fri only)">
-                  📅 13-ወር
-                </button>
-              </div>
-              <div class="hearing-rule-note">
-                <span class="note-icon">ℹ️</span>
-                <span>Rule: Hearing slots are strictly bound to <strong>Wednesday</strong> or <strong>Friday</strong> municipal dispute calendars (excluding official public holidays).</span>
-              </div>
-            </div>
-
-            <div class="hearing-slots-view">
-              <div class="slots-header">
-                <h3 id="hearingDateHeading">Scheduled Sessions</h3>
-                <span class="badge" id="hearingSlotCount">0 Sessions</span>
-              </div>
-              <div id="hearingSlotsList" class="slots-container">
-                <!-- Injected dynamically -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: CIVIC CALENDAR & PUBLIC HOLIDAYS -->
-      <div id="offCalendarTab" class="tab-content">
-        <div class="card">
-          <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 1.25rem;">
-              <div class="card-header-icon">🗓️</div>
-              <div>
-                <h2 class="card-title">13-Month Ethiopian Civic Calendar & Gazetted Public Holidays</h2>
-                <p class="card-subtitle">Official municipal calendar engine computing statutory SLA working days, Wednesday/Friday digital hearings, and national holiday moratoriums.</p>
-              </div>
-            </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <button class="btn btn-secondary btn-sm active" id="calModeBtnEth" onclick="CivicCalendar.setCalendarPageMode('ethiopian')">🇪🇹 13 ወራት (Ethiopian)</button>
-              <button class="btn btn-secondary btn-sm" id="calModeBtnGreg" onclick="CivicCalendar.setCalendarPageMode('gregorian')">🌐 Gregorian</button>
-              <button class="btn btn-primary btn-sm" onclick="CivicCalendar.openAddHolidayModal()" id="calBtnAddHoliday" title="Super Admin: Register Moon Sighting / Movable Holiday">
-                <span>➕ Add Public Holiday</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Calendar Month Navigation & Grid -->
-          <div class="civic-cal-wrapper">
-            <div class="civic-cal-month-nav">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(-1)">‹ Previous Month</button>
-              <h3 id="civicCalendarMonthHeading" class="civic-cal-month-title">መስከረም (Meskerem) 2019 ዓ.ም</h3>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(1)">Next Month ›</button>
-            </div>
-
-            <div class="civic-cal-header-bar">
-              <span>ሰኞ<br><small>Mon</small></span>
-              <span>ማክሰኞ<br><small>Tue</small></span>
-              <span class="hearing-col-header">ረቡዕ ⭐<br><small>Wed (Hearings)</small></span>
-              <span>ሐሙስ<br><small>Thu</small></span>
-              <span class="hearing-col-header">ዓርብ ⭐<br><small>Fri (Hearings)</small></span>
-              <span class="weekend-col-header">ቅዳሜ<br><small>Sat</small></span>
-              <span class="weekend-col-header">እሑድ<br><small>Sun</small></span>
-            </div>
-
-            <div id="civicCalendarMonthGrid" class="civic-cal-grid">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
-
-          <!-- Split Row: Working-Day Calculator Tool & Holiday Gazette -->
-          <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-top: 2rem;">
-            
-            <!-- TOOL: Working-Day Calculator -->
-            <div class="card" style="margin-bottom:0; background:var(--bg-elevated); border:1px solid rgba(56,189,248,0.25);">
-              <div class="card-header" style="padding-bottom:0.75rem;">
-                <div class="card-header-icon" style="font-size:1.2rem;">⏱️</div>
-                <div>
-                  <h3 class="card-title" style="font-size:1.05rem;">Civic Working-Day Calculator</h3>
-                  <p class="card-subtitle" style="font-size:0.75rem;">Calculate exact statutory business days between any two dates excluding weekends and public holidays.</p>
-                </div>
-              </div>
-
-              <div style="padding: 1.25rem;">
-                <div class="form-group" style="margin-bottom: 0.75rem;">
-                  <label>Start Date (From) *</label>
-                  <div style="display:flex; gap:0.5rem;">
-                    <input type="date" id="calcFromInput" class="form-input" style="flex:1;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcFromInput'))" title="Pick Ethiopian Date">
-                      📅 13-ወር
-                    </button>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0.75rem;">
-                  <label>End Date (To) *</label>
-                  <div style="display:flex; gap:0.5rem;">
-                    <input type="date" id="calcToInput" class="form-input" style="flex:1;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcToInput'))" title="Pick Ethiopian Date">
-                      📅 13-ወር
-                    </button>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1rem;">
-                  <label>Input Calendar Format</label>
-                  <select id="calcCalendarSelect" class="form-input">
-                    <option value="gregorian">Gregorian (ISO Standard YYYY-MM-DD)</option>
-                    <option value="ethiopian">Ethiopian (የኢትዮጵያ ዘመን አቆጣጠር)</option>
-                  </select>
-                </div>
-
-                <button type="button" class="btn btn-primary" style="width:100%;" onclick="CivicCalendar.calculateWorkingDaysTool()">
-                  <span>⚡ Calculate Statutory Working Days</span>
-                </button>
-
-                <div id="calcResultsDisplay" style="margin-top: 1rem;">
-                  <!-- Results injected dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- DIRECTORY: Official Gazetted Holidays -->
-            <div class="card" style="margin-bottom:0;">
-              <div class="card-header" style="padding-bottom:0.75rem; justify-content:space-between;">
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                  <div class="card-header-icon" style="font-size:1.2rem;">📜</div>
+          <!-- TAB: CASE QUEUE -->
+          <div id="offCasesTab" class="tab-content active">
+            <div class="card">
+              <!-- Active RBAC Jurisdiction Scoping Indicator -->
+              <div id="activeJurisdictionBanner" class="jurisdiction-scope-bar" style="margin-bottom: 1.25rem; padding: 0.85rem 1.15rem; border-radius: 10px; background: var(--color-primary-light); border: 1px solid rgba(15, 45, 89, 0.25); display: flex; align-items: center; justify-content: space-between; font-size: 0.88rem; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span id="jurisdictionBadgeIcon" style="font-size: 1.4rem;">🏛️</span>
                   <div>
-                    <h3 class="card-title" style="font-size:1.05rem;">Gazetted Public Holidays Directory</h3>
-                    <p class="card-subtitle" style="font-size:0.75rem;">Legally gazetted public holidays recognized by the Addis Ababa City Administration.</p>
+                    <strong id="jurisdictionScopeTitle" style="color: var(--color-primary);">የስልጣን ወሰን ማጣሪያ (RBAC Scoping):</strong>
+                    <span id="jurisdictionScopeText" style="color: var(--color-text); margin-left: 0.35rem;">በተመደቡበት ክፍለ ከተማና ወረዳ ብቻ የተገደበ (Scoped to Authorized Jurisdiction)</span>
                   </div>
+                </div>
+                <span id="jurisdictionBadgeTier" class="officer-struct-badge" style="background: rgba(15, 45, 89, 0.1); border-color: rgba(15, 45, 89, 0.3); color: var(--color-primary); font-weight: 700; letter-spacing: 0.05em;">WOREDA TIER</span>
+              </div>
+
+              <div class="card-toolbar">
+                <div class="search-wrap">
+                  <input type="text" id="officialSearchInput" class="form-input form-input-sm" placeholder="Search ticket #, citizen, title..." onkeyup="filterCasesTable()">
+                </div>
+                <div class="filter-group">
+                  <select id="filterStatusSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
+                    <option value="">All Statuses</option>
+                    <option value="SUBMITTED">SUBMITTED</option>
+                    <option value="UNDER_REVIEW">UNDER REVIEW</option>
+                    <option value="SCHEDULED_FOR_HEARING">SCHEDULED FOR HEARING</option>
+                    <option value="ESCALATED_TO_SUBCITY">ESCALATED TO SUBCITY</option>
+                    <option value="ESCALATED_TO_CITY">ESCALATED TO CITY</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                  </select>
+                  <select id="filterBreachSelect" class="form-input form-input-sm" onchange="loadOfficialCases()">
+                    <option value="">All Deadlines</option>
+                    <option value="true">Breached SLA Only</option>
+                  </select>
+                  <button class="btn btn-secondary btn-sm" onclick="loadOfficialCases()">
+                    <span>🔄 Refresh</span>
+                  </button>
                 </div>
               </div>
 
-              <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+              <div class="table-container">
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th>Gregorian</th>
-                      <th>የኢትዮጵያ ቀን</th>
-                      <th>Holiday Name (የበዓሉ ስም)</th>
-                      <th>Type</th>
-                      <th>Legal Source</th>
+                      <th>Ticket #</th>
+                      <th>Citizen & Phone</th>
+                      <th>Classification</th>
+                      <th>Current Tier</th>
+                      <th>SLA Countdown</th>
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="officialHolidaysTableBody">
-                    <!-- Injected dynamically -->
+                  <tbody id="casesTableBody">
+                    <!-- Cases dynamically populated here via app.js -->
                   </tbody>
                 </table>
               </div>
             </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: ADMINISTRATIVE BOTTLENECK HEATMAP -->
-      <div id="offHeatmapTab" class="tab-content">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-icon">📈</div>
-            <div>
-              <h2 class="card-title">Cross-Tier Administrative Bottleneck Heatmap</h2>
-              <p class="card-subtitle">Real-time observability comparing response latencies and breach rates across Woredas, Sub-Cities, and City Administration.</p>
-            </div>
           </div>
 
-          <div class="heatmap-table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Administrative Tier</th>
-                  <th>Level</th>
-                  <th>Active Cases</th>
-                  <th>Breached Cases</th>
-                  <th>Breach % Rate</th>
-                  <th>Efficiency Index</th>
-                </tr>
-              </thead>
-              <tbody id="heatmapTableBody">
-                <!-- Injected dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+          <!-- TAB: WEDNESDAY & FRIDAY DIGITAL HEARINGS -->
+          <div id="offHearingsTab" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-header-icon">⚖️</div>
+                <div>
+                  <h2 class="card-title" data-i18n="hearingTitle">Digital Hearing Desk (Wednesdays & Fridays)</h2>
+                  <p class="card-subtitle" data-i18n="hearingSubtitle">In-app virtual hearing room scheduler replacing in-person office queues per municipal protocol.</p>
+                </div>
+              </div>
 
-      <!-- TAB: IMMUTABLE AUDIT LEDGER -->
-      <div id="offAuditTab" class="tab-content">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-icon">🛡️</div>
-            <div>
-              <h2 class="card-title">Cryptographic & Append-Only Audit Ledger</h2>
-              <p class="card-subtitle">Immutable records of every ticket mutation, official intervention, and automated SLA escalation.</p>
-            </div>
-          </div>
+              <div class="hearings-desk-grid">
+                <div class="hearing-calendar-sidebar">
+                  <label class="form-label" data-i18n="selectHearingDay">Select Presiding Hearing Session:</label>
+                  <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
+                    <input type="date" id="hearingDatePicker" class="form-input" onchange="loadHearingsForDate()" style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('hearingDatePicker'), { hearingOnly: true, onSelect: () => loadHearingsForDate() })" title="Pick Ethiopian Hearing Date (Wed/Fri only)">
+                      📅 13-ወር
+                    </button>
+                  </div>
+                  <div class="hearing-rule-note">
+                    <span class="note-icon">ℹ️</span>
+                    <span>Rule: Hearing slots are strictly bound to <strong>Wednesday</strong> or <strong>Friday</strong> municipal dispute calendars (excluding official public holidays).</span>
+                  </div>
+                </div>
 
-          <div id="auditLogList" class="audit-timeline">
-            <!-- Dynamic audit trail items injected here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: OFFICIAL STAFF & ADMINISTRATOR MANAGEMENT -->
-      <div id="offUsersTab" class="tab-content">
-        <div class="card">
-          <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 1.25rem;">
-              <div class="card-header-icon">👥</div>
-              <div>
-                <h2 class="card-title">Official Municipal Staff Directory & RBAC Provisioning</h2>
-                <p class="card-subtitle">Provision, assign, and revoke official credentials across Woredas, Sub-Cities, and City Administration.</p>
+                <div class="hearing-slots-view">
+                  <div class="slots-header">
+                    <h3 id="hearingDateHeading">Scheduled Sessions</h3>
+                    <span class="badge" id="hearingSlotCount">0 Sessions</span>
+                  </div>
+                  <div id="hearingSlotsList" class="slots-container">
+                    <!-- Injected dynamically via app.js -->
+                  </div>
+                </div>
               </div>
             </div>
-            <button class="btn btn-primary btn-glow" onclick="openCreateUserModal()">
-              <span class="btn-icon">➕</span>
-              <span>Provision New Official</span>
-            </button>
           </div>
 
-          <div class="card-toolbar">
-            <div class="search-wrap">
-              <input type="text" id="officialUserSearchInput" class="form-input form-input-sm" placeholder="Search officer name, email, or role..." onkeyup="filterOfficialUsersTable()">
-            </div>
-            <div class="filter-group">
-              <button class="btn btn-secondary btn-sm" onclick="loadOfficialUsers()">
-                <span>🔄 Refresh Staff Directory</span>
-              </button>
+          <!-- TAB: CIVIC CALENDAR & PUBLIC HOLIDAYS -->
+          <div id="offCalendarTab" class="tab-content">
+            <div class="card">
+              <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                  <div class="card-header-icon">🗓️</div>
+                  <div>
+                    <h2 class="card-title">13-Month Ethiopian Civic Calendar & Gazetted Public Holidays</h2>
+                    <p class="card-subtitle">Official municipal calendar engine computing statutory SLA working days, Wednesday/Friday digital hearings, and national holiday moratoriums.</p>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <button class="btn btn-secondary btn-sm active" id="calModeBtnEth" onclick="CivicCalendar.setCalendarPageMode('ethiopian')">🇪🇹 13 ወራት (Ethiopian)</button>
+                  <button class="btn btn-secondary btn-sm" id="calModeBtnGreg" onclick="CivicCalendar.setCalendarPageMode('gregorian')">🌐 Gregorian</button>
+                  <button class="btn btn-primary btn-sm" onclick="CivicCalendar.openAddHolidayModal()" id="calBtnAddHoliday" title="Super Admin: Register Moon Sighting / Movable Holiday">
+                    <span>➕ Add Public Holiday</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Calendar Month Navigation & Grid -->
+              <div class="civic-cal-wrapper">
+                <div class="civic-cal-month-nav">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(-1)">‹ Previous Month</button>
+                  <h3 id="civicCalendarMonthHeading" class="civic-cal-month-title">መስከረም (Meskerem) 2019 ዓ.ም</h3>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(1)">Next Month ›</button>
+                </div>
+
+                <div class="civic-cal-header-bar">
+                  <span>ሰኞ<br><small>Mon</small></span>
+                  <span>ማክሰኞ<br><small>Tue</small></span>
+                  <span class="hearing-col-header">ረቡዕ ⭐<br><small>Wed (Hearings)</small></span>
+                  <span>ሐሙስ<br><small>Thu</small></span>
+                  <span class="hearing-col-header">ዓርብ ⭐<br><small>Fri (Hearings)</small></span>
+                  <span class="weekend-col-header">ቅዳሜ<br><small>Sat</small></span>
+                  <span class="weekend-col-header">እሑድ<br><small>Sun</small></span>
+                </div>
+
+                <div id="civicCalendarMonthGrid" class="civic-cal-grid">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+
+              <!-- Split Row: Working-Day Calculator Tool & Holiday Gazette -->
+              <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-top: 2rem;">
+                
+                <!-- TOOL: Working-Day Calculator -->
+                <div class="card" style="margin-bottom:0; background:var(--color-bg); border:1px solid var(--color-border);">
+                  <div class="card-header" style="padding-bottom:0.75rem;">
+                    <div class="card-header-icon" style="font-size:1.2rem;">⏱️</div>
+                    <div>
+                      <h3 class="card-title" style="font-size:1.05rem;">Civic Working-Day Calculator</h3>
+                      <p class="card-subtitle" style="font-size:0.75rem;">Calculate exact statutory business days between any two dates excluding weekends and public holidays.</p>
+                    </div>
+                  </div>
+
+                  <div style="padding: 1.25rem;">
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                      <label>Start Date (From) *</label>
+                      <div style="display:flex; gap:0.5rem;">
+                        <input type="date" id="calcFromInput" class="form-input" style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcFromInput'))" title="Pick Ethiopian Date">
+                          📅 13-ወር
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                      <label>End Date (To) *</label>
+                      <div style="display:flex; gap:0.5rem;">
+                        <input type="date" id="calcToInput" class="form-input" style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcToInput'))" title="Pick Ethiopian Date">
+                          📅 13-ወር
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                      <label>Input Calendar Format</label>
+                      <select id="calcCalendarSelect" class="form-input">
+                        <option value="gregorian">Gregorian (ISO Standard YYYY-MM-DD)</option>
+                        <option value="ethiopian">Ethiopian (የኢትዮጵያ ዘመን አቆጣጠር)</option>
+                      </select>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" style="width:100%;" onclick="CivicCalendar.calculateWorkingDaysTool()">
+                      <span>⚡ Calculate Statutory Working Days</span>
+                    </button>
+
+                    <div id="calcResultsDisplay" style="margin-top: 1rem;">
+                      <!-- Results injected dynamically -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DIRECTORY: Official Gazetted Holidays -->
+                <div class="card" style="margin-bottom:0;">
+                  <div class="card-header" style="padding-bottom:0.75rem; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                      <div class="card-header-icon" style="font-size:1.2rem;">📜</div>
+                      <div>
+                        <h3 class="card-title" style="font-size:1.05rem;">Gazetted Public Holidays Directory</h3>
+                        <p class="card-subtitle" style="font-size:0.75rem;">Legally gazetted public holidays recognized by the Addis Ababa City Administration.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Gregorian</th>
+                          <th>የኢትዮጵያ ቀን</th>
+                          <th>Holiday Name (የበዓሉ ስም)</th>
+                          <th>Type</th>
+                          <th>Legal Source</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="officialHolidaysTableBody">
+                        <!-- Injected dynamically via JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
 
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Officer Name</th>
-                  <th>Contact Info</th>
-                  <th>RBAC Role</th>
-                  <th>Assigned Jurisdiction</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="officialUsersTableBody">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
+          <!-- TAB: ADMINISTRATIVE BOTTLENECK HEATMAP -->
+          <div id="offHeatmapTab" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-header-icon">📈</div>
+                <div>
+                  <h2 class="card-title">Cross-Tier Administrative Bottleneck Heatmap</h2>
+                  <p class="card-subtitle">Real-time observability comparing response latencies and breach rates across Woredas, Sub-Cities, and City Administration.</p>
+                </div>
+              </div>
+
+              <div class="heatmap-table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Administrative Tier</th>
+                      <th>Level</th>
+                      <th>Active Cases</th>
+                      <th>Breached Cases</th>
+                      <th>Breach % Rate</th>
+                      <th>Efficiency Index</th>
+                    </tr>
+                  </thead>
+                  <tbody id="heatmapTableBody">
+                    <!-- Injected dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <!-- TAB: IMMUTABLE AUDIT LEDGER -->
+          <div id="offAuditTab" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-header-icon">🛡️</div>
+                <div>
+                  <h2 class="card-title">Cryptographic & Append-Only Audit Ledger</h2>
+                  <p class="card-subtitle">Immutable records of every ticket mutation, official intervention, and automated SLA escalation.</p>
+                </div>
+              </div>
+
+              <div id="auditLogList" class="audit-timeline">
+                <!-- Dynamic audit trail items injected here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB: OFFICIAL STAFF & ADMINISTRATOR MANAGEMENT -->
+          <div id="offUsersTab" class="tab-content">
+            <div class="card">
+              <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                  <div class="card-header-icon">👥</div>
+                  <div>
+                    <h2 class="card-title">Official Municipal Staff Directory & RBAC Provisioning</h2>
+                    <p class="card-subtitle">Provision, assign, and revoke official credentials across Woredas, Sub-Cities, and City Administration.</p>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-glow" onclick="openCreateUserModal()">
+                  <span class="btn-icon">➕</span>
+                  <span>Provision New Official</span>
+                </button>
+              </div>
+
+              <div class="card-toolbar">
+                <div class="search-wrap">
+                  <input type="text" id="officialUserSearchInput" class="form-input form-input-sm" placeholder="Search officer name, email, or role..." onkeyup="filterOfficialUsersTable()">
+                </div>
+                <div class="filter-group">
+                  <button class="btn btn-secondary btn-sm" onclick="loadOfficialUsers()">
+                    <span>🔄 Refresh Staff Directory</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Officer Name</th>
+                      <th>Contact Info</th>
+                      <th>RBAC Role</th>
+                      <th>Assigned Jurisdiction</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="officialUsersTableBody">
+                    <!-- Dynamically populated via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div> <!-- end .official-main-content -->
       </div> <!-- end #officialDashboardView -->
     </section>
@@ -1018,7 +1129,7 @@
   <!-- ========================================================================= -->
   <!-- MODAL: SCHEDULE DIGITAL HEARING                                           -->
   <!-- ========================================================================= -->
-  <div id="scheduleHearingModal" class="modal-backdrop hidden">
+  <div id="scheduleHearingModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('scheduleHearingModal')">
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 class="modal-title">Schedule Digital Hearing (Wed / Fri)</h3>
@@ -1070,7 +1181,7 @@
   <!-- ========================================================================= -->
   <!-- MODAL: RESOLVE CASE & ISSUE CERTIFIED DECISION                             -->
   <!-- ========================================================================= -->
-  <div id="resolveCaseModal" class="modal-backdrop hidden">
+  <div id="resolveCaseModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('resolveCaseModal')">
     <div class="modal-dialog">
       <div class="modal-header">
         <h3 class="modal-title">Sign Off Official Resolution</h3>
@@ -1114,7 +1225,7 @@
           <span style="font-size:1.6rem; line-height:1;">📂</span>
           <div>
             <h3 class="modal-title" style="margin:0; font-size:1.3rem;">Municipal Case Dossier & Evidence Vault</h3>
-            <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:2px;">የጉዳይ ዝርዝር መዝገብ፣ የሰነድ ማስረጃዎች እና የድምፅ ቃለ-መጠይቆች ማዕከል</div>
+            <div style="font-size:0.76rem; color:var(--color-muted); margin-top:2px;">የጉዳይ ዝርዝር መዝገብ፣ የሰነድ ማስረጃዎች እና የድምፅ ቃለ-መጠይቆች ማዕከል</div>
           </div>
         </div>
         <button class="modal-close" onclick="closeModal('caseDetailModal')">&times;</button>
@@ -1126,7 +1237,7 @@
           <span class="ticket-cell" id="cdModalTicket" style="font-size:0.95rem; font-weight:700;">TKT-000000</span>
           <span id="cdModalStatus" class="status-badge status-UNDER_REVIEW">UNDER REVIEW</span>
           <span id="cdModalSla" class="sla-tag normal">SLA Active</span>
-          <span style="color:var(--text-secondary); font-size:0.82rem; margin-left:0.4rem;">Applicant: <strong id="cdModalCitizen" style="color:var(--cyan-400);">--</strong></span>
+          <span style="color:var(--color-muted); font-size:0.82rem; margin-left:0.4rem;">Applicant: <strong id="cdModalCitizen" style="color:var(--color-primary);">--</strong></span>
         </div>
         <div class="cd-summary-actions">
           <button type="button" class="btn btn-secondary btn-sm" id="cdBtnHearing" onclick="openHearingModalFromDossier()" title="Schedule Virtual Hearing">
@@ -1200,7 +1311,7 @@
               <div class="cd-card-body">
                 <div class="cd-field-row">
                   <span class="cd-label">Jurisdiction Tier:</span>
-                  <span class="cd-val" id="cdJurisdictionTier" style="font-weight:700; color:var(--cyan-400);">--</span>
+                  <span class="cd-val" id="cdJurisdictionTier" style="font-weight:700; color:var(--color-primary);">--</span>
                 </div>
                 <div class="cd-field-row">
                   <span class="cd-label">Office / Structure:</span>
@@ -1266,7 +1377,7 @@
             <div class="cd-card-body">
               <div class="cd-field-row">
                 <span class="cd-label">Hearing Date:</span>
-                <span class="cd-val" id="cdHearingDate" style="font-weight:700; color:var(--cyan-400);">--</span>
+                <span class="cd-val" id="cdHearingDate" style="font-weight:700; color:var(--color-primary);">--</span>
               </div>
               <div class="cd-field-row">
                 <span class="cd-label">Time Window:</span>
@@ -1286,15 +1397,15 @@
           </div>
 
           <!-- Official Resolution Card (if resolved) -->
-          <div class="cd-section-card" id="cdResolutionSection" style="margin-top:1rem; display:none; border-color:var(--emerald-500);">
-            <div class="cd-card-header" style="color:var(--emerald-400);">
+          <div class="cd-section-card" id="cdResolutionSection" style="margin-top:1rem; display:none; border-color:var(--color-success);">
+            <div class="cd-card-header" style="color:var(--color-success);">
               <span class="cd-card-icon">🛡️</span>
               <h4>Official Certified Resolution</h4>
             </div>
             <div class="cd-card-body">
               <div class="cd-field-row">
                 <span class="cd-label">Certifying Official:</span>
-                <span class="cd-val" id="cdResolvedBy" style="font-weight:700; color:var(--emerald-400);">--</span>
+                <span class="cd-val" id="cdResolvedBy" style="font-weight:700; color:var(--color-success);">--</span>
               </div>
               <div class="cd-field-row">
                 <span class="cd-label">Resolution Timestamp:</span>
@@ -1308,10 +1419,10 @@
           </div>
         </div>
 
-        <!-- TAB 2: DOCUMENTS & EVIDENCE (UPLOD DOCUME) -->
+        <!-- TAB 2: DOCUMENTS & EVIDENCE -->
         <div id="cdPanelDocs" class="cd-tab-panel" style="display:none;">
           <!-- Upload Document Form -->
-          <div class="cd-section-card" style="border-left: 3px solid var(--primary-500);">
+          <div class="cd-section-card" style="border-left: 3px solid var(--color-primary);">
             <div class="cd-card-header">
               <span class="cd-card-icon">⬆️</span>
               <h4>Upload & Attach Legal Evidence Document / አዲስ የሰነድ ማስረጃ ያያይዙ</h4>
@@ -1364,7 +1475,7 @@
                 <span>📂 Case Evidence Repository</span>
                 <span class="cd-counter-badge" id="cdDocCountBadge">0</span>
               </h4>
-              <span style="font-size:0.78rem; color:var(--text-secondary);">Tamper-evident attachments stored with SHA-256 seal</span>
+              <span style="font-size:0.78rem; color:var(--color-muted);">Tamper-evident attachments stored with SHA-256 seal</span>
             </div>
             <div id="cdDocsContainer" class="cd-evidence-grid">
               <!-- Rendered via JS -->
@@ -1372,7 +1483,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: AUDIO & VOICE MEMOS (AUDIO) -->
+        <!-- TAB 3: AUDIO & VOICE MEMOS -->
         <div id="cdPanelAudio" class="cd-tab-panel" style="display:none;">
           <div class="cd-grid-2">
             <!-- Studio 1: Live Voice Recording Studio -->
@@ -1382,7 +1493,7 @@
                   <span class="studio-mic-icon">🎙️</span>
                   <div>
                     <h4 style="margin:0; font-size:1rem; color:white;">Live Audio Recording Studio</h4>
-                    <div style="font-size:0.72rem; color:var(--text-secondary);">የድምፅ ቃለ-መጠይቅ፣ ቃል እና የምስክርነት መቅረጫ</div>
+                    <div style="font-size:0.72rem; color:var(--color-muted);">የድምፅ ቃለ-መጠይቅ፣ ቃል እና የምስክርነት መቅረጫ</div>
                   </div>
                 </div>
                 <div class="recording-badge" id="cdRecordPulseBadge" style="display:none;">
@@ -1415,7 +1526,7 @@
 
               <!-- Save Recorded Memo Form -->
               <div style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.75rem;">
-                <label style="font-size:0.78rem; color:var(--text-secondary); display:block; margin-bottom:0.25rem;">Voice Memo Title / Context *</label>
+                <label style="font-size:0.78rem; color:var(--color-muted); display:block; margin-bottom:0.25rem;">Voice Memo Title / Context *</label>
                 <input type="text" id="cdVoiceMemoTitle" class="form-input" placeholder="e.g. Citizen verbal testimony on land boundary dispute" style="font-size:0.85rem; padding:0.45rem 0.75rem;">
                 <button type="button" class="btn btn-primary btn-sm" id="cdBtnSaveRecord" onclick="saveAudioAttachment()" disabled style="width:100%; margin-top:0.6rem;">
                   <span>💾 Attach Recorded Voice Memo to Case</span>
@@ -1429,7 +1540,7 @@
                 <span class="cd-card-icon">📻</span>
                 <div>
                   <h4 style="margin:0; font-size:1rem;">Upload Pre-Recorded Audio File</h4>
-                  <div style="font-size:0.72rem; color:var(--text-secondary);">የተቀረጸ የድምፅ ፋይል ያያይዙ (.mp3, .wav, .m4a, .webm)</div>
+                  <div style="font-size:0.72rem; color:var(--color-muted);">የተቀረጸ የድምፅ ፋይል ያያይዙ (.mp3, .wav, .m4a, .webm)</div>
                 </div>
               </div>
               <div class="cd-card-body">
@@ -1461,7 +1572,7 @@
                 <span>🎙️ Case Audio Records & Voice Memos</span>
                 <span class="cd-counter-badge" id="cdAudioCountBadge">0</span>
               </h4>
-              <span style="font-size:0.78rem; color:var(--text-secondary);">Embedded in-browser playback player</span>
+              <span style="font-size:0.78rem; color:var(--color-muted);">Embedded in-browser playback player</span>
             </div>
             <div id="cdAudioContainer" class="cd-audio-grid">
               <!-- Rendered via JS -->
@@ -1476,7 +1587,7 @@
               <span class="cd-card-icon">📜</span>
               <div>
                 <h4 style="margin:0;">Immutable Case Audit Ledger</h4>
-                <div style="font-size:0.76rem; color:var(--text-secondary);">Cryptographically sequenced administrative action trail</div>
+                <div style="font-size:0.76rem; color:var(--color-muted);">Cryptographically sequenced administrative action trail</div>
               </div>
             </div>
             <div class="cd-card-body">
@@ -1491,7 +1602,7 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer cd-modal-footer">
-        <span style="font-size:0.76rem; color:var(--text-secondary); margin-right:auto;">
+        <span style="font-size:0.76rem; color:var(--color-muted); margin-right:auto;">
           🛡️ Municipal Integrity Seal & Cloud Vault Active
         </span>
         <button type="button" class="btn btn-secondary" onclick="closeModal('caseDetailModal')">Close Dossier</button>
@@ -1509,7 +1620,7 @@
           <span id="dpModalIcon" style="font-size:1.4rem;">📄</span>
           <div style="min-width:0;">
             <h3 class="modal-title" id="dpModalTitle" style="font-size:1.1rem; margin:0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">Evidence Preview</h3>
-            <div id="dpModalMeta" style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">PDF Document • Cryptographic Seal Verified</div>
+            <div id="dpModalMeta" style="font-size:0.75rem; color:var(--color-muted); margin-top:2px;">PDF Document • Cryptographic Seal Verified</div>
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
@@ -1527,12 +1638,12 @@
           <!-- Dynamic iframe, image, or reader rendered via JS -->
         </div>
         <div id="dpModalOcrBox" class="doc-preview-ocr-tray" style="display:none;">
-          <strong style="color:var(--cyan-400); font-size:0.78rem;">📝 Extracted OCR Notes / Transcribed Text:</strong>
-          <div id="dpModalOcrText" style="font-size:0.8rem; color:#cbd5e1; margin-top:2px;"></div>
+          <strong style="color:var(--color-primary); font-size:0.78rem;">📝 Extracted OCR Notes / Transcribed Text:</strong>
+          <div id="dpModalOcrText" style="font-size:0.8rem; color:var(--color-text); margin-top:2px;"></div>
         </div>
       </div>
       <div class="modal-footer" style="padding:0.75rem 1.5rem;">
-        <span style="font-size:0.75rem; color:var(--text-secondary); margin-right:auto;">
+        <span style="font-size:0.75rem; color:var(--color-muted); margin-right:auto;">
           🛡️ Ethiopian Municipal Cadastre & Evidence Integrity Hash Verified
         </span>
         <button type="button" class="btn btn-secondary" onclick="closeModal('docPreviewModal')">Close Preview</button>
@@ -1579,7 +1690,7 @@
           </div>
 
           <!-- Dynamic Jurisdiction Guidance Banner -->
-          <div id="newUserJurisdictionNotice" style="padding: 0.65rem 0.85rem; margin-bottom: 1rem; border-radius: 8px; font-size: 0.83rem; line-height: 1.45; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd;">
+          <div id="newUserJurisdictionNotice" style="padding: 0.65rem 0.85rem; margin-bottom: 1rem; border-radius: 8px; font-size: 0.83rem; line-height: 1.45; background: var(--color-primary-light); border: 1px solid rgba(15, 45, 89, 0.3); color: var(--color-primary);">
             ⚠️ <strong>የስልጣን ወሰን (Jurisdiction):</strong> ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ ሁለቱም መመረጥ አለባቸው!
           </div>
 
@@ -1651,7 +1762,9 @@
     </div>
   </div>
 
-  <!-- Municipal Backend Gateway Configuration Modal (Vercel & Docker Cloud Bridge) -->
+  <!-- ========================================================================= -->
+  <!-- MODAL: MUNICIPAL BACKEND GATEWAY CONFIGURATION                            -->
+  <!-- ========================================================================= -->
   <div id="gatewayModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('gatewayModal')">
     <div class="modal-dialog" style="max-width: 580px;">
       <div class="modal-header">
@@ -1660,7 +1773,7 @@
             <span>🌐</span>
             <span>Municipal Cloud Gateway Bridge</span>
           </h3>
-          <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">
+          <p style="font-size:0.8rem; color:var(--color-muted); margin-top:0.25rem;">
             Connect Vercel / Cloud Citizen Portal to your Local Municipal Docker System
           </p>
         </div>
@@ -1669,15 +1782,15 @@
 
       <div class="modal-body">
         <!-- Live Connection Status Card -->
-        <div id="gatewayStatusDisplay" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
-          <div style="font-size:0.82rem; color:var(--text-tertiary);">Status: Probing backend connection...</div>
+        <div id="gatewayStatusDisplay" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+          <div style="font-size:0.82rem; color:var(--color-muted);">Status: Probing backend connection...</div>
         </div>
 
         <!-- Custom Gateway URL Input -->
         <div class="form-group">
           <label style="display:flex; justify-content:space-between; align-items:center;">
             <span>Backend Gateway URL (Host or Tunnel)</span>
-            <span style="font-size:0.75rem; color:var(--text-tertiary);">Leave blank for Same-Origin (Local Docker)</span>
+            <span style="font-size:0.75rem; color:var(--color-muted);">Leave blank for Same-Origin (Local Docker)</span>
           </label>
           <div style="display:flex; gap:0.5rem;">
             <input type="url" id="gatewayUrlInput" class="form-input" placeholder="e.g. https://my-subdomain.loca.lt or http://localhost:8080" style="flex:1;">
@@ -1689,28 +1802,28 @@
 
         <!-- Quick Connection Presets -->
         <div class="form-group" style="margin-top:1rem;">
-          <label style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-tertiary);">One-Click Presets</label>
+          <label style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--color-muted);">One-Click Presets</label>
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
-            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('')" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--text-secondary); cursor:pointer;">
+            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('')" style="background:var(--color-bg); border:1px solid var(--color-border); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--color-text); cursor:pointer;">
               🏠 Same-Origin / Localhost
             </button>
-            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('http://localhost:8080')" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--text-secondary); cursor:pointer;">
+            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('http://localhost:8080')" style="background:var(--color-bg); border:1px solid var(--color-border); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--color-text); cursor:pointer;">
               🐳 Docker Local (http://localhost:8080)
             </button>
-            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('https://19d22af1980e2f.lhr.life')" style="background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.4); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--emerald-400); cursor:pointer;">
+            <button type="button" class="btn-text-sm" onclick="setGatewayPreset('https://19d22af1980e2f.lhr.life')" style="background:rgba(30, 107, 55, 0.12); border:1px solid rgba(30, 107, 55, 0.35); padding:0.4rem 0.75rem; border-radius:var(--radius-sm); font-size:0.78rem; color:var(--color-success); cursor:pointer;">
               🚇 Live Tunnel (19d22af1980e2f.lhr.life)
             </button>
           </div>
         </div>
 
         <!-- Explanatory Guide Box -->
-        <div style="background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.25); border-radius:var(--radius-md); padding:0.85rem; font-size:0.8rem; line-height:1.5; color:var(--text-secondary); margin-top:1rem;">
-          <div style="font-weight:700; color:#60a5fa; margin-bottom:0.35rem; display:flex; align-items:center; gap:0.35rem;">
+        <div style="background:var(--color-primary-light); border:1px solid rgba(15, 45, 89, 0.25); border-radius:var(--radius-md); padding:0.85rem; font-size:0.8rem; line-height:1.5; color:var(--color-text); margin-top:1rem;">
+          <div style="font-weight:700; color:var(--color-primary); margin-bottom:0.35rem; display:flex; align-items:center; gap:0.35rem;">
             <span>💡</span>
             <span>How to connect Citizen Portal on Vercel to your Local Docker:</span>
           </div>
           <ol style="margin-left:1.25rem; margin-top:0.25rem; padding:0;">
-            <li>On your PC running Docker, start an HTTPS tunnel: <br><code style="background:var(--bg-elevated); padding:2px 6px; border-radius:4px; font-size:0.76rem; color:#93c5fd;">npx localtunnel --port 8080</code> (or Cloudflare Tunnel)</li>
+            <li>On your PC running Docker, start an HTTPS tunnel: <br><code style="background:var(--color-surface); padding:2px 6px; border-radius:4px; font-size:0.76rem; color:var(--color-primary); border:1px solid var(--color-border);">npx localtunnel --port 8080</code> (or Cloudflare Tunnel)</li>
             <li>Copy the public HTTPS URL generated (e.g. <code style="font-size:0.76rem;">https://eth-portal.loca.lt</code>)</li>
             <li>Paste it above, or share the link with <code style="font-size:0.76rem;">?api=https://eth-portal.loca.lt</code> to auto-connect any citizen device!</li>
           </ol>
@@ -1749,7 +1862,7 @@
             <option value="ethiopian">Always Ethiopian (13 ወራት የኢትዮጵያ ዘመን አቆጣጠር)</option>
             <option value="gregorian">Always Gregorian (የፈረንጆች አቆጣጠር)</option>
           </select>
-          <small style="color:var(--text-secondary); display:block; margin-top:0.35rem;">
+          <small style="color:var(--color-muted); display:block; margin-top:0.35rem;">
             Controls civic date rendering across tickets, audit log, and SLA badges.
           </small>
         </div>
@@ -1759,7 +1872,7 @@
             <input type="checkbox" id="calGeezNumeralsCheckbox" style="width:1.15rem; height:1.15rem;">
             <span style="font-weight:600;">Enable Ge'ez Numerals (የግዕዝ ቁጥሮች ፩ ፪ ፫...)</span>
           </label>
-          <small style="color:var(--text-secondary); display:block; margin-left:1.75rem; margin-top:0.25rem;">
+          <small style="color:var(--color-muted); display:block; margin-left:1.75rem; margin-top:0.25rem;">
             Applies traditional Ge'ez numerical representation to Ethiopian calendar days and years.
           </small>
         </div>
@@ -1818,9 +1931,81 @@
     </div>
   </div>
 
-  <!-- Notification Toast Container -->
-  <div id="toastContainer" class="toast-container"></div>
+  <!-- ========================================================================= -->
+  <!-- 6. INSTITUTIONAL GOVERNMENT FOOTER                                        -->
+  <!-- ========================================================================= -->
+  <footer id="aboutSection" class="gov-footer" role="contentinfo">
+    <div class="gov-footer-container">
+      <div class="gov-footer-grid">
+        <!-- Brand Column -->
+        <div class="gov-footer-brand">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+            <span style="font-size:1.8rem;">🏛️</span>
+            <div>
+              <h4 style="margin:0; font-size:1.1rem; color:#FFFFFF;">Addis Ababa City Administration</h4>
+              <div class="gov-footer-sub">የአዲስ አበባ ከተማ አስተዳደር</div>
+            </div>
+          </div>
+          <p class="gov-footer-desc">
+            The official digital public service resolution and civic grievance platform of the Addis Ababa City Administration, providing verifiable SLA turnaround guarantees, cross-tier escalation, and virtual hearing arbitrations.
+          </p>
+        </div>
 
+        <!-- Public Services Column -->
+        <div class="gov-footer-col">
+          <h5>Public Services</h5>
+          <ul class="gov-footer-links">
+            <li><a href="javascript:void(0)" onclick="showCitizenTab('intake')">File Grievance</a></li>
+            <li><a href="javascript:void(0)" onclick="showCitizenTab('track')">Track Case Status</a></li>
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Virtual Hearing Protocol</a></li>
+            <li><a href="javascript:void(0)" onclick="openCalendarSettingsModal()">Calendar & Holidays</a></li>
+            <li><a href="javascript:void(0)" onclick="openGatewayModal()">Gateway Settings</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal & Governance Column -->
+        <div class="gov-footer-col">
+          <h5>Legal Framework</h5>
+          <ul class="gov-footer-links">
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Proclamation No. 16/1975</a></li>
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Working-Day Directive</a></li>
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Citizen Service Charter</a></li>
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Privacy & Data Security</a></li>
+            <li><a href="javascript:void(0)" onclick="openOfficialInfoModal()">Accessibility (WCAG 2.2)</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact & Support Column -->
+        <div class="gov-footer-col">
+          <h5>Municipal Contact & Support</h5>
+          <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.84rem; color:#CBD5E1;">
+            <div>📍 <strong>City Hall:</strong> Churchill Avenue, Addis Ababa, Ethiopia</div>
+            <div>📞 <strong>Municipal Call Center:</strong> 991 (Toll-Free)</div>
+            <div>📧 <strong>Official Inquiries:</strong> info@addisababa.gov.et</div>
+            <div>🕒 <strong>Working Hours:</strong> Mon - Fri: 8:30 AM – 5:30 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bottom Bar -->
+      <div class="gov-footer-bottom">
+        <div class="gov-footer-copy">
+          &copy; 2026 Addis Ababa City Administration (የአዲስ አበባ ከተማ አስተዳደር). All Rights Reserved. Built with Clean Architecture & Sovereign Cryptographic Audit Trail.
+        </div>
+
+        <!-- Live Municipal Gateway / Cloud Status Chip -->
+        <div id="systemStatusChip" class="gov-system-status" onclick="openGatewayModal()" style="cursor:pointer;" title="Click to view Gateway connection">
+          <span class="status-indicator-dot"></span>
+          <span id="systemStatusText">Addis Ababa Municipal Cloud • Active</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast Container -->
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- JavaScript Modules -->
   <script src="/static/js/calendar.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
