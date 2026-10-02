@@ -26,8 +26,33 @@ const SESSION_USER_KEY = 'smart_onestop_user';
 // ============================================================================
 const API_BASE_KEY = 'smart_onestop_api_base';
 
-// Live Zero-Trust Edge Gateway (Cloudflare Tunnel: Transparent CORS, Zero 511 Errors)
-const LIVE_GATEWAY_URL = 'https://deputy-grain-strength-cyber.trycloudflare.com';
+// Immediate purge of stale/expired tunnels from localStorage
+try {
+  const _stored = localStorage.getItem(API_BASE_KEY);
+  if (_stored && (_stored.includes('trycloudflare.com') || _stored.includes('loca.lt') || _stored.includes('deputy-grain-strength-cyber'))) {
+    localStorage.removeItem(API_BASE_KEY);
+  }
+  // On localhost / 127.0.0.1, always purge external tunnel overrides unless an active ?api= parameter is explicitly passed in the URL
+  const _isLocal = ['localhost', '127.0.0.1', '[::1]', ''].includes(window.location.hostname);
+  const _hasApiQuery = new URLSearchParams(window.location.search).has('api');
+  if (_isLocal && !_hasApiQuery) {
+    localStorage.removeItem(API_BASE_KEY);
+  }
+} catch (e) {
+  // Ignore localStorage security/sandbox errors
+}
+
+// Live Zero-Trust Gateway for remote deployments (empty string defaults to same-origin)
+const LIVE_GATEWAY_URL = '';
+
+function isLocalOrigin() {
+  try {
+    const h = window.location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '' || h.endsWith('.local');
+  } catch (e) {
+    return false;
+  }
+}
 
 function getApiBase() {
   // 1. Check URL parameters: ?api=... or ?api_base=... or ?backend=...
@@ -43,14 +68,30 @@ function getApiBase() {
     console.warn("Could not parse search params:", e);
   }
 
-  // 2. Check localStorage & auto-migrate from dead loca.lt tunnels
+  // 2. If running locally (localhost / 127.0.0.1), always use same-origin relative URLs
+  if (isLocalOrigin()) {
+    try {
+      const stored = localStorage.getItem(API_BASE_KEY);
+      if (stored && (stored.includes('trycloudflare.com') || stored.includes('loca.lt') || stored.includes('deputy-grain-strength-cyber'))) {
+        localStorage.removeItem(API_BASE_KEY);
+        return '';
+      }
+      if (stored && (stored.includes('localhost') || stored.includes('127.0.0.1'))) {
+        return stored.trim().replace(/\/+$/, '');
+      }
+    } catch (e) {
+      console.warn("Could not read localStorage:", e);
+    }
+    return '';
+  }
+
+  // 3. Check localStorage for remote deployments
   try {
     const stored = localStorage.getItem(API_BASE_KEY);
     if (stored && stored.trim() !== '') {
-      if (stored.includes('loca.lt')) {
-        // Auto-migrate from deprecated localtunnel to Cloudflare Edge
-        localStorage.setItem(API_BASE_KEY, LIVE_GATEWAY_URL);
-        return LIVE_GATEWAY_URL;
+      if (stored.includes('trycloudflare.com') || stored.includes('loca.lt') || stored.includes('deputy-grain-strength-cyber')) {
+        localStorage.removeItem(API_BASE_KEY);
+        return LIVE_GATEWAY_URL || '';
       }
       return stored.trim().replace(/\/+$/, '');
     }
@@ -58,17 +99,17 @@ function getApiBase() {
     console.warn("Could not read localStorage:", e);
   }
 
-  // 3. Check window.ENV
+  // 4. Check window.ENV
   if (window.ENV && window.ENV.API_BASE) {
     return window.ENV.API_BASE.trim().replace(/\/+$/, '');
   }
 
-  // 4. If running on Vercel cloud, connect directly to the live municipal edge tunnel
+  // 5. If running on Vercel cloud and a live gateway is configured
   if (window.location && window.location.hostname && window.location.hostname.includes('vercel.app')) {
-    return LIVE_GATEWAY_URL;
+    return LIVE_GATEWAY_URL || '';
   }
 
-  // 5. Default: empty string (same-origin relative URL for localhost)
+  // 6. Default: empty string (same-origin relative URL for local server)
   return '';
 }
 
