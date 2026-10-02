@@ -193,7 +193,66 @@ The seeder initializes the municipal hierarchy for Addis Ababa:
 
 ---
 
-## 6. Key API Endpoints
+## 6. Ethiopian Working-Day Engine & Civic Calendar
+
+The platform features an enterprise **Ethiopian Working-Day & Holiday Engine** implemented in `internal/domain/workcalendar` with 0 external I/O and ~95% test statement coverage:
+
+- **13-Month Ethiopian Calendar:** Algorithmic conversion using Julian Day Number (JDN) mapping between Gregorian and Ethiopic epochs (`ethiopicJDNEpoch = 1723856`).
+- **Leap Year Dynamics:** Computes 6 days in Pagume (ጳጉሜ) every 4 years (`year % 4 == 3`), automatically handling the +1 day Gregorian holiday shift following Ethiopian leap years.
+- **Orthodox Ecclesiastical Computus:** Determines movable Orthodox Good Friday (*Siklet*) and Easter (*Fasika*) using the Julian-calendar Dionysian paschalion computus with 13-day Gregorian adjustment.
+- **Working-Day SLA Counting:** Automatically calculates SLA deadlines and remaining hours by skipping weekends and official public holidays.
+- **Digital Hearing Scheduler:** Guarantees hearings are scheduled strictly on working **Wednesdays and Fridays**, automatically skipping public holidays.
+- **Ge'ez Numerals & Bilingual Names:** Converts dates and numbers to authentic Ge'ez numerals (፩, ፪, ፲, ፳, ፻) and displays month names in English and Amharic (መስከረም ... ጳጉሜ).
+
+### Calendar API Endpoints:
+- `GET /api/v1/calendar/working-days?start=2026-10-01&hours=24` - Calculate deadline and working days
+- `GET /api/v1/calendar/holidays?year=2026` - List all seeded public holidays (fixed, movable, Islamic)
+- `GET /api/v1/calendar/next-hearing-slots?from=2026-10-01&count=5` - Next available Wednesday/Friday hearing sessions
+
+---
+
+## 7. Responsive Mobile-First Redesign & Collapsible Navigation
+
+The portal implements an accessible, responsive civic design system across 5 viewports:
+- **Breakpoints:** `360px` (compact mobile), `480px` (large mobile), `768px` (tablets/drawers), `1024px` (laptops), and `1440px+` (command displays).
+- **Responsive Table Transformation:** On screens `< 768px`, data tables transform into elevated card lists with `data-label` metadata and 2x2 touch action grids, eliminating horizontal scrolling.
+- **Mobile Bottom Sheets:** Modals and case dossiers transform into mobile slide-up sheets with top touch handles, fluid scrolling, and sticky action buttons.
+- **Collapsible Staff Sidebar:**
+  - **Expanded (260px):** Brand header, route indicators, pending case counter badge, officer profile card, and SLA trigger button.
+  - **Collapsed Rail (72px):** Icon-only presentation with hover tooltips and smooth cubic-bezier transition.
+  - **Mobile Off-Canvas Drawer (`< 768px`):** Slides out with background backdrop overlay, hamburger button in top command bar, swipe-to-close, and keyboard shortcut (`Ctrl+B` / `Cmd+B`).
+- **Touch-First Accessibility:** Minimum 44x44px touch targets across all interactive elements.
+
+---
+
+## 8. Testing, Quality Assurance & CI
+
+### Running Unit & Package Tests
+```bash
+# Run all tests with coverage
+go test -v -cover ./...
+
+# Run internal/domain/workcalendar test suite with breakdown
+go test -v -coverprofile=coverage.out ./internal/domain/workcalendar
+go tool cover -func=coverage.out
+
+# Run Go Vet
+go vet ./...
+
+# Validate Client-Side Vanilla JS
+node -c web/static/js/app.js web/static/js/calendar.js
+```
+
+### Continuous Integration (CI)
+GitHub Actions workflow configured in `.github/workflows/ci.yml` validates:
+1. `go vet ./...` and `go build ./...`
+2. `go test -v -race -cover ./...`
+3. Node syntax check (`node -c`) for zero frontend build step integrity
+4. Docker Compose configuration verification (`docker compose config`)
+
+---
+
+## 9. Key API Endpoints Reference
 
 - `GET /healthz` - Liveness probe
 - `GET /metrics` - Prometheus metrics
@@ -206,3 +265,7 @@ The seeder initializes the municipal hierarchy for Addis Ababa:
 - `POST /api/v1/cases/{id}/hearings` - Schedule Wednesday/Friday digital hearing slot
 - `GET /api/v1/analytics/dashboard` - Executive metrics & bottleneck heatmap
 - `POST /api/v1/sla/trigger-sweep` - On-demand trigger for SLA auto-escalation sweep
+- `GET /api/v1/calendar/working-days` - Working-day calculation & deadline prediction
+- `GET /api/v1/calendar/holidays` - Public holidays list
+- `GET /api/v1/calendar/next-hearing-slots` - Available hearing appointment slots
+

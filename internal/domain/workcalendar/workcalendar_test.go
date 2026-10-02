@@ -243,11 +243,16 @@ func TestGeezNumerals(t *testing.T) {
 		input    int
 		expected string
 	}{
+		{0, "0"},
+		{-5, "-5"},
+		{10000, "10000"},
 		{1, "፩"},
 		{7, "፯"},
 		{10, "፲"},
 		{17, "፲፯"},
 		{23, "፳፫"},
+		{100, "፻"},
+		{200, "፪፻"},
 		{2017, "፳፻፲፯"},
 	}
 
@@ -258,3 +263,183 @@ func TestGeezNumerals(t *testing.T) {
 		}
 	}
 }
+
+// TestAddWorkingDays tests adding positive, zero, and negative working days.
+func TestAddWorkingDays(t *testing.T) {
+	loc := AddisAbabaLocation()
+	cal := NewCalendar(DefaultConfig(), nil)
+
+	// Friday 2026-10-02
+	friday := time.Date(2026, 10, 2, 10, 0, 0, 0, loc)
+
+	// 0 days
+	if !cal.AddWorkingDays(friday, 0).Equal(friday) {
+		t.Errorf("AddWorkingDays with 0 should return same time")
+	}
+
+	// +1 working day skips Sat & Sun -> Monday 2026-10-05
+	monday := cal.AddWorkingDays(friday, 1)
+	if monday.Weekday() != time.Monday || monday.Day() != 5 {
+		t.Errorf("AddWorkingDays(+1) from Friday should be Monday Oct 5, got %v", monday)
+	}
+
+	// -1 working day from Monday 2026-10-05 -> Friday 2026-10-02
+	prevFriday := cal.AddWorkingDays(monday, -1)
+	if prevFriday.Weekday() != time.Friday || prevFriday.Day() != 2 {
+		t.Errorf("AddWorkingDays(-1) from Monday should be Friday Oct 2, got %v", prevFriday)
+	}
+}
+
+// TestSaturdayHalfDayConfiguration tests working calendar with Saturday enabled as half day.
+func TestSaturdayHalfDayConfiguration(t *testing.T) {
+	loc := AddisAbabaLocation()
+	cfg := DefaultConfig()
+	cfg.SaturdayHalfDay = true
+	cfg.SatEndHour = 12
+	cfg.SatEndMinute = 30
+
+	cal := NewCalendar(cfg, nil)
+
+	satHours := cal.SaturdayHours()
+	if satHours != 4.0 {
+		t.Errorf("Expected Saturday hours 4.0, got %f", satHours)
+	}
+
+	// Saturday 2026-10-03
+	saturday := time.Date(2026, 10, 3, 9, 0, 0, 0, loc)
+	if !cal.IsWorkingDay(saturday, "") {
+		t.Errorf("Saturday should be working day when SaturdayHalfDay is true")
+	}
+
+	// Sunday 2026-10-04 is always off
+	sunday := time.Date(2026, 10, 4, 10, 0, 0, 0, loc)
+	if cal.IsWorkingDay(sunday, "") {
+		t.Errorf("Sunday must never be a working day")
+	}
+}
+
+// TestNextHearingSlots tests fetching multiple consecutive hearing slots.
+func TestNextHearingSlots(t *testing.T) {
+	loc := AddisAbabaLocation()
+	cal := NewCalendar(DefaultConfig(), nil)
+
+	// Thursday 2026-10-01
+	thursday := time.Date(2026, 10, 1, 9, 0, 0, 0, loc)
+	slots := cal.NextHearingSlots(thursday, 4)
+
+	if len(slots) != 4 {
+		t.Fatalf("Expected 4 slots, got %d", len(slots))
+	}
+
+	// Expected: Friday Oct 2, Wednesday Oct 7, Friday Oct 9, Wednesday Oct 14
+	expectedWeekdays := []time.Weekday{time.Friday, time.Wednesday, time.Friday, time.Wednesday}
+	for i, s := range slots {
+		if s.Weekday() != expectedWeekdays[i] {
+			t.Errorf("Slot %d: expected %v, got %v", i, expectedWeekdays[i], s.Weekday())
+		}
+	}
+
+	// Default count fallback when <= 0
+	defSlots := cal.NextHearingSlots(thursday, 0)
+	if len(defSlots) != 5 {
+		t.Errorf("Expected default 5 slots when count <= 0, got %d", len(defSlots))
+	}
+}
+
+// TestEthiopianMonthNamesAndFormatting tests Amharic & English month names and string formatting.
+func TestEthiopianMonthNamesAndFormatting(t *testing.T) {
+	if EthiopianMonthName(0, "en") != "" || EthiopianMonthName(14, "en") != "" {
+		t.Errorf("Invalid month should return empty string")
+	}
+
+	if EthiopianMonthName(1, "en") != "Meskerem" || EthiopianMonthName(1, "am") != "መስከረም" {
+		t.Errorf("Month 1 name mismatch")
+	}
+	if EthiopianMonthName(13, "en") != "Pagume" || EthiopianMonthName(13, "am") != "ጳጉሜ" {
+		t.Errorf("Month 13 name mismatch")
+	}
+
+	ed := EthiopianDate{Year: 2017, Month: 1, Day: 17}
+	enStr := FormatEthiopian(ed, "en")
+	amStr := FormatEthiopian(ed, "am")
+
+	if enStr != "Meskerem 17, 2017" {
+		t.Errorf("FormatEthiopian EN mismatch: got %s", enStr)
+	}
+	if amStr != "መስከረም 17, 2017" {
+		t.Errorf("FormatEthiopian AM mismatch: got %s", amStr)
+	}
+
+	// Invalid days in month
+	if DaysInEthiopianMonth(2017, 0) != 0 || DaysInEthiopianMonth(2017, 14) != 0 {
+		t.Errorf("DaysInEthiopianMonth should be 0 for invalid month")
+	}
+}
+
+// TestPackageLevelConvenienceFunctions tests the package-level wrappers delegating to Default().
+func TestPackageLevelConvenienceFunctions(t *testing.T) {
+	loc := AddisAbabaLocation()
+	testChecker := func(date time.Time, structureID string) bool {
+		return false
+	}
+	SetDefaultHolidayChecker(testChecker)
+
+	now := time.Date(2026, 10, 2, 10, 0, 0, 0, loc)
+	_ = IsWorkingDay(now, "")
+	_ = AddWorkingDays(now, 1)
+	_ = AddWorkingHours(now, 2.5)
+	_ = CountWorkingDays(now, now.AddDate(0, 0, 3))
+	_ = NextHearingDay(now)
+	_ = NextHearingSlots(now, 3)
+
+	// Inverted CountWorkingDays (from > to)
+	negDays := CountWorkingDays(now.AddDate(0, 0, 3), now)
+	if negDays >= 0 {
+		t.Errorf("Expected negative working days when from > to, got %f", negDays)
+	}
+
+	// AddWorkingHours with <= 0
+	if !AddWorkingHours(now, 0).Equal(now) {
+		t.Errorf("AddWorkingHours(0) should return unchanged time")
+	}
+
+	// Calendar with invalid timezone fallback
+	cfgInvalid := DefaultConfig()
+	cfgInvalid.TimeZone = "NonExistent/Timezone"
+	calFallback := NewCalendar(cfgInvalid, nil)
+	if calFallback == nil {
+		t.Fatalf("Expected valid calendar on fallback")
+	}
+
+	// Saturday hours when Saturday is off
+	calSatOff := NewCalendar(DefaultConfig(), nil)
+	if calSatOff.SaturdayHours() != 0 {
+		t.Errorf("Saturday hours should be 0 when SaturdayHalfDay is false")
+	}
+
+	// Calendar location nil fallback
+	calNilLoc := &Calendar{config: DefaultConfig()}
+	if calNilLoc.Location() == nil {
+		t.Errorf("Location() should fallback to AddisAbabaLocation when loc is nil")
+	}
+
+	// Office hours for Sunday (not a working day)
+	sunday := time.Date(2026, 10, 4, 10, 0, 0, 0, loc)
+	_, _, ok := calSatOff.OfficeHoursForDay(sunday, "")
+	if ok {
+		t.Errorf("Sunday should not be a working day for OfficeHoursForDay")
+	}
+
+	// Office hours for Monday (normal working day)
+	monday := time.Date(2026, 10, 5, 10, 0, 0, 0, loc)
+	startWork, endWork, okWork := calSatOff.OfficeHoursForDay(monday, "")
+	if !okWork || startWork.Hour() != 8 || endWork.Hour() != 17 {
+		t.Errorf("Monday office hours should be 08:30 - 17:00")
+	}
+
+	// Standard work day hours
+	if calSatOff.StandardWorkDayHours() != 8.5 {
+		t.Errorf("Expected standard 8.5 hours per working day")
+	}
+}
+
