@@ -538,6 +538,18 @@
       <!-- TAB: CASE QUEUE -->
       <div id="offCasesTab" class="tab-content active">
         <div class="card">
+          <!-- Active RBAC Jurisdiction Scoping Indicator -->
+          <div id="activeJurisdictionBanner" class="jurisdiction-scope-bar" style="margin-bottom: 1.25rem; padding: 0.85rem 1.15rem; border-radius: 10px; background: linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.4)); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: space-between; font-size: 0.88rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span id="jurisdictionBadgeIcon" style="font-size: 1.4rem;">🏛️</span>
+              <div>
+                <strong id="jurisdictionScopeTitle" style="color: var(--cyan-400);">የስልጣን ወሰን ማጣሪያ (RBAC Scoping):</strong>
+                <span id="jurisdictionScopeText" style="color: #cbd5e1; margin-left: 0.35rem;">በተመደቡበት ክፍለ ከተማና ወረዳ ብቻ የተገደበ (Scoped to Authorized Jurisdiction)</span>
+              </div>
+            </div>
+            <span id="jurisdictionBadgeTier" class="officer-struct-badge" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #7dd3fc; font-weight: 700; letter-spacing: 0.05em;">WOREDA TIER</span>
+          </div>
+
           <div class="card-toolbar">
             <div class="search-wrap">
               <input type="text" id="officialSearchInput" class="form-input form-input-sm" placeholder="Search ticket #, citizen, title..." onkeyup="filterCasesTable()">
@@ -1265,21 +1277,36 @@
             <input type="password" id="newUserPassword" class="form-input" required minlength="6" value="Password123!">
           </div>
           <div class="form-group">
-            <label>Assigned RBAC Role *</label>
-            <select id="newUserRole" class="form-input" required>
-              <option value="WOREDA_OFFICER">WOREDA_OFFICER (Initial Tier Intake Officer)</option>
-              <option value="SUBCITY_MANAGER">SUBCITY_MANAGER (Sub-City Escalation Desk)</option>
-              <option value="CITY_DIRECTOR">CITY_DIRECTOR (City-Wide Appeals & Hearings)</option>
-              <option value="SERVICE_DESK_AGENT">SERVICE_DESK_AGENT (Kiosk & Physical Intake)</option>
-              <option value="SUPER_ADMIN">SUPER_ADMIN (Full Platform Administrator)</option>
+            <label>Assigned RBAC Role (የስራ ድርሻ) *</label>
+            <select id="newUserRole" class="form-input" required onchange="handleCreateUserRoleChange()">
+              <option value="WOREDA_OFFICER">WOREDA_OFFICER (የደረጃ 1 ቅበላ ኦፊሰር - ወረዳ ደረጃ)</option>
+              <option value="SUBCITY_MANAGER">SUBCITY_MANAGER (የክፍለ ከተማ መሪ - ክፍለ ከተማ ደረጃ)</option>
+              <option value="CITY_DIRECTOR">CITY_DIRECTOR (የከተማ አቀፍ ዳይሬክተር - City-Wide)</option>
+              <option value="SERVICE_DESK_AGENT">SERVICE_DESK_AGENT (ኪዮስክ / ዴስክ ኦፊሰር)</option>
+              <option value="SUPER_ADMIN">SUPER_ADMIN (ሙሉ ሲስተም አስተዳዳሪ)</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Assigned Administrative Jurisdiction</label>
-            <select id="newUserStructure" class="form-input">
-              <option value="">-- Addis Ababa City Administration (Global) --</option>
-            </select>
+
+          <!-- Dynamic Jurisdiction Guidance Banner -->
+          <div id="newUserJurisdictionNotice" style="padding: 0.65rem 0.85rem; margin-bottom: 1rem; border-radius: 8px; font-size: 0.83rem; line-height: 1.45; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd;">
+            ⚠️ <strong>የስልጣን ወሰን (Jurisdiction):</strong> ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ ሁለቱም መመረጥ አለባቸው!
           </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" id="groupSubCity">
+              <label id="lblSubCity">ክፍለ ከተማ (Sub-City) *</label>
+              <select id="newUserSubCity" class="form-input" onchange="handleCreateUserSubCityChange()">
+                <option value="">-- ክፍለ ከተማ ይምረጡ --</option>
+              </select>
+            </div>
+            <div class="form-group" id="groupWoreda">
+              <label id="lblWoreda">ወረዳ (Woreda) *</label>
+              <select id="newUserWoreda" class="form-input" onchange="handleCreateUserWoredaChange()">
+                <option value="">-- አስቀድመው ክፍለ ከተማ ይምረጡ --</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" id="newUserStructure" value="">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeModal('createUserModal')">Cancel</button>

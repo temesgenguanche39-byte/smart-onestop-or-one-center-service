@@ -10,6 +10,7 @@ import (
 // CaseFilter parameters for querying tickets
 type CaseFilter struct {
 	StructureID     *uint
+	StructureIDs    []uint // Scoped list of authorized administrative structures (Sub-City, Woredas)
 	CitizenID       *uuid.UUID
 	AssignedToID    *uuid.UUID
 	Status          *CaseStatus

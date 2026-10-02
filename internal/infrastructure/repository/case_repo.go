@@ -86,6 +86,8 @@ func (r *GormCaseRepository) List(ctx context.Context, filter domain.CaseFilter)
 
 	if filter.StructureID != nil {
 		q = q.Where("current_structure_id = ?", *filter.StructureID)
+	} else if len(filter.StructureIDs) > 0 {
+		q = q.Where("current_structure_id IN ?", filter.StructureIDs)
 	}
 	if filter.CitizenID != nil {
 		q = q.Where("citizen_id = ?", *filter.CitizenID)

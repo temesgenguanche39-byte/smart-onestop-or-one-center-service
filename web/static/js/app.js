@@ -1406,16 +1406,37 @@ function updateAuthUI(isAuthenticated) {
 
     if (nameEl) nameEl.textContent = currentUser.full_name;
     if (roleEl) roleEl.textContent = currentUser.role;
-    if (structEl) structEl.textContent = currentUser.structure_name || 'City Administration';
+
+    // Build rich Ethiopian municipal jurisdiction descriptor
+    let jurisdictionBadgeText = currentUser.structure_name || 'City Administration';
+    if (currentUser.role === 'SUPER_ADMIN') {
+      jurisdictionBadgeText = '🛡️ አዲስ አበባ ከተማ አስተዳደር (Super Admin)';
+    } else if (currentUser.role === 'CITY_DIRECTOR') {
+      jurisdictionBadgeText = '⚖️ አዲስ አበባ ከተማ አቀፍ (City-Wide Scope)';
+    } else if (currentUser.role === 'SUBCITY_MANAGER') {
+      const scName = currentUser.sub_city_name || currentUser.structure_name || 'Sub-City';
+      jurisdictionBadgeText = `🏢 ${scName} ክፍለ ከተማ (Sub-City Queue)`;
+    } else if (currentUser.role === 'WOREDA_OFFICER') {
+      const scName = currentUser.sub_city_name ? `${currentUser.sub_city_name} • ` : '';
+      const wName = currentUser.woreda_name || currentUser.structure_name || 'Woreda';
+      jurisdictionBadgeText = `🏛️ ${scName}${wName}`;
+    } else if (currentUser.role === 'SERVICE_DESK_AGENT') {
+      jurisdictionBadgeText = `🎫 ${currentUser.structure_name || 'Service Desk Queue'}`;
+    }
+    if (structEl) structEl.textContent = jurisdictionBadgeText;
 
     let avatar = '⚖️';
     if (currentUser.role === 'SUPER_ADMIN') avatar = '🛡️';
     else if (currentUser.role === 'CITY_DIRECTOR') avatar = '⚖️';
     else if (currentUser.role === 'SUBCITY_MANAGER') avatar = '🏢';
     else if (currentUser.role === 'WOREDA_OFFICER') avatar = '🏛️';
+    else if (currentUser.role === 'SERVICE_DESK_AGENT') avatar = '🎫';
 
     if (avatarEl) avatarEl.textContent = avatar;
     if (navSessionAvatar) navSessionAvatar.textContent = avatar;
+
+    // Update Case Queue Active Jurisdiction Scoping Banner
+    updateCaseQueueJurisdictionBanner(currentUser);
 
     // Role switcher dropdown synchronization
     const roleSelect = document.getElementById('roleSwitchSelect');
@@ -1431,6 +1452,51 @@ function updateAuthUI(isAuthenticated) {
     if (loginGate) loginGate.classList.remove('hidden');
     if (dashView) dashView.classList.add('hidden');
     if (navSessionBadge) navSessionBadge.classList.add('hidden');
+  }
+}
+
+function updateCaseQueueJurisdictionBanner(user) {
+  const iconEl = document.getElementById('jurisdictionBadgeIcon');
+  const titleEl = document.getElementById('jurisdictionScopeTitle');
+  const textEl = document.getElementById('jurisdictionScopeText');
+  const tierEl = document.getElementById('jurisdictionBadgeTier');
+  if (!titleEl || !textEl) return;
+
+  if (user.role === 'SUPER_ADMIN' || user.role === 'CITY_DIRECTOR') {
+    if (iconEl) iconEl.textContent = '🌐';
+    titleEl.textContent = 'የከተማ አቀፍ ሙሉ ስልጣን (City-Wide Authority):';
+    textEl.textContent = 'የሁሉንም 11 ክፍለ ከተሞችና 138 ወረዳዎች ኬዞች የማየትና የመምራት ሙሉ ስልጣን (Addis Ababa Central Governance)';
+    if (tierEl) {
+      tierEl.textContent = 'CENTRAL DIRECTIVITY';
+      tierEl.style.color = '#38bdf8';
+    }
+  } else if (user.role === 'SUBCITY_MANAGER') {
+    if (iconEl) iconEl.textContent = '🏢';
+    const sc = user.sub_city_name || user.structure_name || 'Sub-City';
+    titleEl.textContent = `የክፍለ ከተማ ስልጣን ክልል (${sc}):`;
+    textEl.textContent = `በ${sc} ክፍለ ከተማ እና በስሩ ባሉ 10+ ወረዳዎች የተመዘገቡ ኬዞች ብቻ ተለይተው ቀርበዋል`;
+    if (tierEl) {
+      tierEl.textContent = 'SUB-CITY TIER';
+      tierEl.style.color = '#a78bfa';
+    }
+  } else if (user.role === 'WOREDA_OFFICER') {
+    if (iconEl) iconEl.textContent = '🏛️';
+    const sc = user.sub_city_name ? `${user.sub_city_name} • ` : '';
+    const w = user.woreda_name || user.structure_name || 'Woreda';
+    titleEl.textContent = `የወረዳ ስልጣን ወሰን (${sc}${w}):`;
+    textEl.textContent = `ተጠቃሚው በስራ ድርሻው በዚህ ወረዳ የተመዘገቡትን ኬዞች ብቻ የማየት ፍቃድ አለው (Strict Woreda Scoping)`;
+    if (tierEl) {
+      tierEl.textContent = 'WOREDA INTAKE TIER';
+      tierEl.style.color = '#34d399';
+    }
+  } else if (user.role === 'SERVICE_DESK_AGENT') {
+    if (iconEl) iconEl.textContent = '🎫';
+    titleEl.textContent = `የቅበላ ዴስክ ወሰን (${user.structure_name || 'Service Desk'}):`;
+    textEl.textContent = `በተመደቡበት የቅበላ ዴስክ የተመዘገቡ ኬዞች ብቻ ይታያሉ`;
+    if (tierEl) {
+      tierEl.textContent = 'DESK TIER';
+      tierEl.style.color = '#fbbf24';
+    }
   }
 }
 
@@ -1668,6 +1734,10 @@ function renderAuditLedger(logs) {
 
 // Load Official Cases Grid
 async function loadOfficialCases() {
+  if (currentUser) {
+    updateCaseQueueJurisdictionBanner(currentUser);
+  }
+
   const status = document.getElementById('filterStatusSelect').value;
   const breached = document.getElementById('filterBreachSelect').value;
 
@@ -3065,27 +3135,27 @@ async function openCreateUserModal() {
     await loadMunicipalHierarchy();
   }
 
-  const sel = document.getElementById('newUserStructure');
-  if (sel) {
-    sel.innerHTML = '<option value="">-- Addis Ababa City Administration (Global) --</option>';
+  // Populate Sub-City dropdown from hierarchy tree
+  const subCitySel = document.getElementById('newUserSubCity');
+  const woredaSel = document.getElementById('newUserWoreda');
+
+  if (subCitySel) {
+    subCitySel.innerHTML = '<option value="">-- ክፍለ ከተማ ይምረጡ (Select Sub-City) --</option>';
 
     if (municipalTree && municipalTree.length > 0 && municipalTree[0].children) {
       municipalTree[0].children.forEach(sc => {
         const scOpt = document.createElement('option');
         scOpt.value = sc.id;
-        scOpt.textContent = `📍 [Sub-City] ${sc.name}`;
-        sel.appendChild(scOpt);
-
-        if (sc.children) {
-          sc.children.forEach(w => {
-            const wOpt = document.createElement('option');
-            wOpt.value = w.id;
-            wOpt.textContent = `  ↳ [Woreda] ${w.name}`;
-            sel.appendChild(wOpt);
-          });
-        }
+        scOpt.dataset.name = sc.name;
+        scOpt.textContent = `🏢 ${sc.name}`;
+        subCitySel.appendChild(scOpt);
       });
     }
+  }
+
+  if (woredaSel) {
+    woredaSel.innerHTML = '<option value="">-- አስቀድመው ክፍለ ከተማ ይምረጡ --</option>';
+    woredaSel.disabled = true;
   }
 
   // Clear inputs for clean form
@@ -3100,7 +3170,139 @@ async function openCreateUserModal() {
   if (pwdInp) pwdInp.value = 'Password123!';
   if (roleInp) roleInp.value = 'WOREDA_OFFICER';
 
+  handleCreateUserRoleChange();
   openModal('createUserModal');
+}
+
+function handleCreateUserRoleChange() {
+  const role = document.getElementById('newUserRole')?.value || 'WOREDA_OFFICER';
+  const noticeEl = document.getElementById('newUserJurisdictionNotice');
+  const subCitySel = document.getElementById('newUserSubCity');
+  const woredaSel = document.getElementById('newUserWoreda');
+  const lblSubCity = document.getElementById('lblSubCity');
+  const lblWoreda = document.getElementById('lblWoreda');
+
+  if (role === 'WOREDA_OFFICER') {
+    if (noticeEl) {
+      noticeEl.innerHTML = '⚠️ <strong>የስልጣን ወሰን (Jurisdiction):</strong> ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ ሁለቱም መመረጥ አለባቸው! (Both Sub-City and Woreda are strictly required)';
+      noticeEl.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+    }
+    if (subCitySel) {
+      subCitySel.disabled = false;
+      subCitySel.required = true;
+    }
+    if (woredaSel) {
+      woredaSel.disabled = !subCitySel?.value;
+      woredaSel.required = true;
+    }
+    if (lblSubCity) lblSubCity.textContent = 'ክፍለ ከተማ (Sub-City) *';
+    if (lblWoreda) lblWoreda.textContent = 'ወረዳ (Woreda) *';
+
+  } else if (role === 'SUBCITY_MANAGER') {
+    if (noticeEl) {
+      noticeEl.innerHTML = '🏢 <strong>የስልጣን ወሰን (Jurisdiction):</strong> ለ SUBCITY_MANAGER ክፍለ ከተማ መመረጥ አለበት (በክፍለ ከተማው ስር ያሉትን ሁሉንም ወረዳዎች ያያል)!';
+      noticeEl.style.borderColor = 'rgba(167, 139, 250, 0.4)';
+    }
+    if (subCitySel) {
+      subCitySel.disabled = false;
+      subCitySel.required = true;
+    }
+    if (woredaSel) {
+      woredaSel.innerHTML = '<option value="">-- በክፍለ ከተማው ስር ያሉትን ወረዳዎች በሙሉ ያካትታል (All Child Woredas) --</option>';
+      woredaSel.disabled = true;
+      woredaSel.required = false;
+    }
+    if (lblSubCity) lblSubCity.textContent = 'ክፍለ ከተማ (Sub-City) *';
+    if (lblWoreda) lblWoreda.textContent = 'ወረዳ (ሁሉም ወረዳዎች ይካተታሉ)';
+
+  } else if (role === 'CITY_DIRECTOR' || role === 'SUPER_ADMIN') {
+    if (noticeEl) {
+      noticeEl.innerHTML = '🌐 <strong>የስልጣን ወሰን (Jurisdiction):</strong> አዲስ አበባ ከተማ አቀፍ ሙሉ ስልጣን (ለሁሉም ክፍለ ከተሞችና ወረዳዎች ሙሉ እይታ)';
+      noticeEl.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+    }
+    if (subCitySel) {
+      subCitySel.innerHTML = '<option value="">-- አዲስ አበባ ከተማ አቀፍ (City-Wide Global) --</option>';
+      subCitySel.disabled = true;
+      subCitySel.required = false;
+    }
+    if (woredaSel) {
+      woredaSel.innerHTML = '<option value="">-- ሁሉም ወረዳዎች (All Woredas) --</option>';
+      woredaSel.disabled = true;
+      woredaSel.required = false;
+    }
+    if (lblSubCity) lblSubCity.textContent = 'ክፍለ ከተማ (ከተማ አቀፍ)';
+    if (lblWoreda) lblWoreda.textContent = 'ወረዳ (ከተማ አቀፍ)';
+
+  } else if (role === 'SERVICE_DESK_AGENT') {
+    if (noticeEl) {
+      noticeEl.innerHTML = '🎫 <strong>የስልጣን ወሰን (Jurisdiction):</strong> ለ SERVICE_DESK_AGENT የሚሰራበት ክፍለ ከተማ ወይም ወረዳ ይምረጡ';
+      noticeEl.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+    }
+    if (subCitySel) {
+      subCitySel.disabled = false;
+      subCitySel.required = true;
+    }
+    if (woredaSel) {
+      woredaSel.disabled = !subCitySel?.value;
+      woredaSel.required = false;
+    }
+    if (lblSubCity) lblSubCity.textContent = 'ክፍለ ከተማ (Sub-City) *';
+    if (lblWoreda) lblWoreda.textContent = 'የተመደበበት ወረዳ (አስፈላጊ ከሆነ)';
+  }
+}
+
+function handleCreateUserSubCityChange() {
+  const role = document.getElementById('newUserRole')?.value || 'WOREDA_OFFICER';
+  const subCitySel = document.getElementById('newUserSubCity');
+  const woredaSel = document.getElementById('newUserWoreda');
+  const structInput = document.getElementById('newUserStructure');
+
+  if (!subCitySel || !woredaSel) return;
+  const scId = subCitySel.value ? parseInt(subCitySel.value) : null;
+
+  if (role === 'SUBCITY_MANAGER') {
+    if (structInput) structInput.value = scId || '';
+    return;
+  }
+
+  woredaSel.innerHTML = '<option value="">-- ወረዳ ይምረጡ (Select Woreda) --</option>';
+
+  if (!scId) {
+    woredaSel.disabled = true;
+    if (structInput) structInput.value = '';
+    return;
+  }
+
+  // Find sub-city node in municipalTree
+  let foundSubCity = null;
+  if (municipalTree && municipalTree.length > 0 && municipalTree[0].children) {
+    foundSubCity = municipalTree[0].children.find(sc => sc.id === scId);
+  }
+
+  if (foundSubCity && foundSubCity.children && foundSubCity.children.length > 0) {
+    foundSubCity.children.forEach(w => {
+      const wOpt = document.createElement('option');
+      wOpt.value = w.id;
+      wOpt.dataset.name = w.name;
+      wOpt.textContent = `📍 ${w.name}`;
+      woredaSel.appendChild(wOpt);
+    });
+    woredaSel.disabled = false;
+  } else {
+    woredaSel.disabled = true;
+  }
+
+  if (role === 'SERVICE_DESK_AGENT' && structInput) {
+    structInput.value = scId;
+  }
+}
+
+function handleCreateUserWoredaChange() {
+  const woredaSel = document.getElementById('newUserWoreda');
+  const structInput = document.getElementById('newUserStructure');
+  if (woredaSel && structInput && woredaSel.value) {
+    structInput.value = woredaSel.value;
+  }
 }
 
 async function handleCreateUserSubmit(e) {
@@ -3110,12 +3312,43 @@ async function handleCreateUserSubmit(e) {
   const phone = document.getElementById('newUserPhone').value.trim();
   const password = document.getElementById('newUserPassword').value;
   const role = document.getElementById('newUserRole').value;
-  const structVal = document.getElementById('newUserStructure').value;
-  const structId = structVal ? parseInt(structVal) : null;
+  const subCityVal = document.getElementById('newUserSubCity')?.value;
+  const woredaVal = document.getElementById('newUserWoreda')?.value;
 
   if (!fullName || !email || !password || !role) {
     showToast('Please fill in all required official account details.', 'error');
     return;
+  }
+
+  // Strict RBAC Jurisdiction Validation matching Python specification
+  let structId = null;
+
+  if (role === 'WOREDA_OFFICER') {
+    if (!subCityVal || !woredaVal) {
+      showToast('ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ መመረጥ አለበት! (Both Sub-City and Woreda must be selected)', 'error');
+      return;
+    }
+    structId = parseInt(woredaVal);
+  } else if (role === 'SUBCITY_MANAGER') {
+    if (!subCityVal) {
+      showToast('ለ SUBCITY_MANAGER ክፍለ ከተማ መመረጥ አለበት! (Sub-City must be selected)', 'error');
+      return;
+    }
+    structId = parseInt(subCityVal);
+  } else if (role === 'CITY_DIRECTOR' || role === 'SUPER_ADMIN') {
+    // City-wide root structure
+    if (municipalTree && municipalTree.length > 0) {
+      structId = municipalTree[0].id;
+    }
+  } else if (role === 'SERVICE_DESK_AGENT') {
+    if (woredaVal) {
+      structId = parseInt(woredaVal);
+    } else if (subCityVal) {
+      structId = parseInt(subCityVal);
+    } else {
+      showToast('ለ SERVICE_DESK_AGENT የስራ ወሰን (ክፍለ ከተማ ወይም ወረዳ) መመረጥ አለበት!', 'error');
+      return;
+    }
   }
 
   const submitBtn = e.target.querySelector('button[type="submit"]');

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -309,6 +310,48 @@ func (s *CaseService) GetByID(ctx context.Context, id uuid.UUID) (*dto.CaseDetai
 	return s.buildCaseDetailResponse(ctx, c)
 }
 
+// GetByIDScoped verifies that the requesting user's RBAC role and jurisdiction permit viewing this case
+func (s *CaseService) GetByIDScoped(ctx context.Context, id uuid.UUID, role domain.UserRole, userStructureID *uint) (*dto.CaseDetailResponse, error) {
+	c, err := s.caseRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, domain.ErrCaseNotFound
+	}
+
+	// 1. SUPER_ADMIN እና CITY_DIRECTOR የሁሉንም ክፍለ ከተሞችና ወረዳዎች ያያሉ
+	if role == domain.RoleSuperAdmin || role == domain.RoleCityDirector || role == "" {
+		return s.buildCaseDetailResponse(ctx, c)
+	}
+
+	if userStructureID == nil {
+		return nil, errors.New("የስልጣን ወሰን አልተመደበም: የተጠቃሚው አስተዳደራዊ ወሰን አልተገኘም (Access denied: no assigned jurisdiction)")
+	}
+
+	// 2. SUBCITY_MANAGER በራሱ ክፍለ ከተማ ስር ያሉትን ሁሉንም ወረዳዎች ያያል
+	if role == domain.RoleSubcityManager {
+		if c.CurrentStructureID != *userStructureID {
+			caseStruct, errS := s.structureRepo.GetByID(ctx, c.CurrentStructureID)
+			if errS != nil || caseStruct.ParentID == nil || *caseStruct.ParentID != *userStructureID {
+				return nil, errors.New("የስልጣን ወሰን አይፈቅድም: ኬዙ በዚህ ክፍለ ከተማ ስር አይገኝም (Access denied: case outside sub-city jurisdiction)")
+			}
+		}
+	} else if role == domain.RoleWoredaOfficer {
+		// 3. WOREDA_OFFICER በራሱ ክፍለ ከተማ እና በራሱ ወረዳ ያሉትን ብቻ ያያል
+		if c.CurrentStructureID != *userStructureID {
+			return nil, errors.New("የስልጣን ወሰን አይፈቅድም: ኬዙ በዚህ ወረዳ ውስጥ አይገኝም (Access denied: case belongs to another woreda)")
+		}
+	} else if role == domain.RoleServiceDeskAgent {
+		// 4. SERVICE_DESK_AGENT እንደየተመደበበት የስራ ወሰን
+		if c.CurrentStructureID != *userStructureID {
+			caseStruct, errS := s.structureRepo.GetByID(ctx, c.CurrentStructureID)
+			if errS != nil || caseStruct.ParentID == nil || *caseStruct.ParentID != *userStructureID {
+				return nil, errors.New("የስልጣን ወሰን አይፈቅድም: ኬዙ በዚህ ዴስክ ክልል ውስጥ አይገኝም (Access denied: case outside desk jurisdiction)")
+			}
+		}
+	}
+
+	return s.buildCaseDetailResponse(ctx, c)
+}
+
 // ListCases filtered by structure, status, breach
 func (s *CaseService) ListCases(ctx context.Context, filter domain.CaseFilter) ([]dto.CaseResponse, int64, error) {
 	cases, total, err := s.caseRepo.List(ctx, filter)
@@ -321,6 +364,80 @@ func (s *CaseService) ListCases(ctx context.Context, filter domain.CaseFilter) (
 		results = append(results, mapToCaseResponse(&c))
 	}
 	return results, total, nil
+}
+
+// ListCasesScoped applies strict Role-Based Access Control (RBAC) & Administrative Jurisdiction Scoping:
+// 1. SUPER_ADMIN & CITY_DIRECTOR: City-wide access (sees all cases across all sub-cities & woredas).
+// 2. SUBCITY_MANAGER: Sub-City jurisdiction (sees cases assigned to their sub-city and all child woredas).
+// 3. WOREDA_OFFICER: Woreda jurisdiction (only sees cases assigned to their specific woreda).
+// 4. SERVICE_DESK_AGENT: Scoped to their assigned structure (woreda or sub-city).
+func (s *CaseService) ListCasesScoped(ctx context.Context, filter domain.CaseFilter, role domain.UserRole, userStructureID *uint) ([]dto.CaseResponse, int64, error) {
+	if role == "" {
+		return s.ListCases(ctx, filter)
+	}
+
+	switch role {
+	case domain.RoleSuperAdmin, domain.RoleCityDirector:
+		// 1. SUPER_ADMIN እና CITY_DIRECTOR የሁሉንም ክፍለ ከተሞችና ወረዳዎች ያያሉ
+		// If caller explicitly asked for a specific structure filter, respect it; otherwise full city-wide
+
+	case domain.RoleSubcityManager:
+		// 2. SUBCITY_MANAGER በራሱ ክፍለ ከተማ ስር ያሉትን ሁሉንም ወረዳዎች ያያል
+		if userStructureID == nil {
+			return []dto.CaseResponse{}, 0, nil
+		}
+		children, err := s.structureRepo.GetChildren(ctx, *userStructureID)
+		allowedIDs := []uint{*userStructureID}
+		if err == nil {
+			for _, ch := range children {
+				allowedIDs = append(allowedIDs, ch.ID)
+			}
+		}
+
+		if filter.StructureID != nil {
+			isAllowed := false
+			for _, id := range allowedIDs {
+				if id == *filter.StructureID {
+					isAllowed = true
+					break
+				}
+			}
+			if !isAllowed {
+				return []dto.CaseResponse{}, 0, nil
+			}
+		} else {
+			filter.StructureIDs = allowedIDs
+		}
+
+	case domain.RoleWoredaOfficer:
+		// 3. WOREDA_OFFICER በራሱ ክፍለ ከተማ እና በራሱ ወረዳ ያሉትን ብቻ ያያል
+		if userStructureID == nil {
+			return []dto.CaseResponse{}, 0, nil
+		}
+		if filter.StructureID != nil && *filter.StructureID != *userStructureID {
+			return []dto.CaseResponse{}, 0, nil
+		}
+		filter.StructureID = userStructureID
+
+	case domain.RoleServiceDeskAgent:
+		// 4. SERVICE_DESK_AGENT እንደየተመደበበት የስራ ወሰን
+		if userStructureID == nil {
+			return []dto.CaseResponse{}, 0, nil
+		}
+		st, err := s.structureRepo.GetByID(ctx, *userStructureID)
+		if err == nil && (st.Level == domain.AdminLevelSubCity || st.Level == "SUBCITY") {
+			children, _ := s.structureRepo.GetChildren(ctx, *userStructureID)
+			allowedIDs := []uint{*userStructureID}
+			for _, ch := range children {
+				allowedIDs = append(allowedIDs, ch.ID)
+			}
+			filter.StructureIDs = allowedIDs
+		} else {
+			filter.StructureID = userStructureID
+		}
+	}
+
+	return s.ListCases(ctx, filter)
 }
 
 // AssignCase assigns official to ticket

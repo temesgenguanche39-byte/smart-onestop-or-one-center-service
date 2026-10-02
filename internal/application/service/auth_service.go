@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -48,15 +49,7 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	structName := ""
-	var adminLevel domain.AdminLevel
-	if u.StructureID != nil {
-		st, err := s.structureRepo.GetByID(ctx, *u.StructureID)
-		if err == nil {
-			structName = st.Name
-			adminLevel = st.Level
-		}
-	}
+	structName, adminLevel, subCity, woreda := s.resolveJurisdictionDetails(ctx, u.StructureID)
 
 	return &dto.LoginResponse{
 		Token: token,
@@ -69,9 +62,35 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 			StructureID:   u.StructureID,
 			StructureName: structName,
 			AdminLevel:    adminLevel,
+			SubCityName:   subCity,
+			WoredaName:    woreda,
 		},
 		ExpiresAt: expiresAt,
 	}, nil
+}
+
+func (s *AuthService) resolveJurisdictionDetails(ctx context.Context, structureID *uint) (structName string, adminLevel domain.AdminLevel, subCityName string, woredaName string) {
+	if structureID == nil {
+		return "Addis Ababa City Administration (Global)", domain.AdminLevelCity, "", ""
+	}
+	st, err := s.structureRepo.GetByID(ctx, *structureID)
+	if err != nil {
+		return "", "", "", ""
+	}
+	structName = st.Name
+	adminLevel = st.Level
+	if st.Level == domain.AdminLevelWoreda {
+		woredaName = st.Name
+		if st.ParentID != nil {
+			parent, errP := s.structureRepo.GetByID(ctx, *st.ParentID)
+			if errP == nil {
+				subCityName = parent.Name
+			}
+		}
+	} else if st.Level == domain.AdminLevelSubCity || st.Level == "SUBCITY" {
+		subCityName = st.Name
+	}
+	return
 }
 
 // GetUserByID loads user info
@@ -81,15 +100,7 @@ func (s *AuthService) GetUserByID(ctx context.Context, id uuid.UUID) (*dto.UserD
 		return nil, domain.ErrUserNotFound
 	}
 
-	structName := ""
-	var adminLevel domain.AdminLevel
-	if u.StructureID != nil {
-		st, err := s.structureRepo.GetByID(ctx, *u.StructureID)
-		if err == nil {
-			structName = st.Name
-			adminLevel = st.Level
-		}
-	}
+	structName, adminLevel, subCity, woreda := s.resolveJurisdictionDetails(ctx, u.StructureID)
 
 	return &dto.UserDTO{
 		ID:            u.ID,
@@ -100,14 +111,35 @@ func (s *AuthService) GetUserByID(ctx context.Context, id uuid.UUID) (*dto.UserD
 		StructureID:   u.StructureID,
 		StructureName: structName,
 		AdminLevel:    adminLevel,
+		SubCityName:   subCity,
+		WoredaName:    woreda,
 	}, nil
 }
 
-// CreateUser provisions a new official user account
+// CreateUser provisions a new official user account with strict jurisdiction validation
 func (s *AuthService) CreateUser(ctx context.Context, req dto.CreateUserRequest) (*dto.UserDTO, error) {
 	existing, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existing != nil {
 		return nil, fmt.Errorf("user with email %s already exists", req.Email)
+	}
+
+	// 1. የስራ ድርሻ ከስልጣን ወሰን (Jurisdiction) ጋር መጣጣሙን ማረጋገጥ (Strict RBAC Scoping)
+	if req.Role == domain.RoleWoredaOfficer {
+		if req.StructureID == nil {
+			return nil, errors.New("ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ መመረጥ አለበት! (Sub-City and Woreda must be selected for WOREDA_OFFICER)")
+		}
+		st, err := s.structureRepo.GetByID(ctx, *req.StructureID)
+		if err != nil || st.Level != domain.AdminLevelWoreda {
+			return nil, errors.New("ለ WOREDA_OFFICER ክፍለ ከተማ እና ወረዳ መመረጥ አለበት! (WOREDA_OFFICER must be assigned to a specific Woreda)")
+		}
+	} else if req.Role == domain.RoleSubcityManager {
+		if req.StructureID == nil {
+			return nil, errors.New("ለ SUBCITY_MANAGER ክፍለ ከተማ መመረጥ አለበት! (Sub-City must be selected for SUBCITY_MANAGER)")
+		}
+		st, err := s.structureRepo.GetByID(ctx, *req.StructureID)
+		if err != nil || (st.Level != domain.AdminLevelSubCity && st.Level != "SUBCITY") {
+			return nil, errors.New("ለ SUBCITY_MANAGER ክፍለ ከተማ መመረጥ አለበት! (SUBCITY_MANAGER must be assigned to a Sub-City level)")
+		}
 	}
 
 	hash, err := security.HashPassword(req.Password)
@@ -142,18 +174,7 @@ func (s *AuthService) ListUsers(ctx context.Context) ([]dto.UserDTO, error) {
 
 	res := make([]dto.UserDTO, len(users))
 	for i, u := range users {
-		structName := ""
-		var adminLevel domain.AdminLevel
-		if u.Structure != nil {
-			structName = u.Structure.Name
-			adminLevel = u.Structure.Level
-		} else if u.StructureID != nil {
-			st, err := s.structureRepo.GetByID(ctx, *u.StructureID)
-			if err == nil {
-				structName = st.Name
-				adminLevel = st.Level
-			}
-		}
+		structName, adminLevel, subCity, woreda := s.resolveJurisdictionDetails(ctx, u.StructureID)
 
 		res[i] = dto.UserDTO{
 			ID:            u.ID,
@@ -164,6 +185,8 @@ func (s *AuthService) ListUsers(ctx context.Context) ([]dto.UserDTO, error) {
 			StructureID:   u.StructureID,
 			StructureName: structName,
 			AdminLevel:    adminLevel,
+			SubCityName:   subCity,
+			WoredaName:    woreda,
 		}
 	}
 	return res, nil

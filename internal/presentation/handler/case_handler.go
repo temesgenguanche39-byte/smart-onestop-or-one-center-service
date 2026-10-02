@@ -10,6 +10,7 @@ import (
 	"github.com/smart-onestop/platform/internal/application/dto"
 	"github.com/smart-onestop/platform/internal/application/service"
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/infrastructure/security"
 	"github.com/smart-onestop/platform/internal/presentation/middleware"
 )
 
@@ -124,7 +125,21 @@ func (h *CaseHandler) ListCases(c *gin.Context) {
 		}
 	}
 
-	cases, total, err := h.caseService.ListCases(c.Request.Context(), filter)
+	var userRole domain.UserRole
+	var userStructureID *uint
+
+	if claimsVal, exists := c.Get(middleware.ContextKeyClaims); exists {
+		if claims, ok := claimsVal.(*security.JWTClaims); ok {
+			userRole = claims.Role
+			userStructureID = claims.StructureID
+		}
+	} else if roleVal, exists := c.Get(middleware.ContextKeyRole); exists {
+		if r, ok := roleVal.(domain.UserRole); ok {
+			userRole = r
+		}
+	}
+
+	cases, total, err := h.caseService.ListCasesScoped(c.Request.Context(), filter, userRole, userStructureID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -138,7 +153,7 @@ func (h *CaseHandler) ListCases(c *gin.Context) {
 	})
 }
 
-// GetByID detailed view
+// GetByID detailed view with RBAC jurisdiction enforcement
 func (h *CaseHandler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -147,8 +162,26 @@ func (h *CaseHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.caseService.GetByID(c.Request.Context(), id)
+	var userRole domain.UserRole
+	var userStructureID *uint
+
+	if claimsVal, exists := c.Get(middleware.ContextKeyClaims); exists {
+		if claims, ok := claimsVal.(*security.JWTClaims); ok {
+			userRole = claims.Role
+			userStructureID = claims.StructureID
+		}
+	} else if roleVal, exists := c.Get(middleware.ContextKeyRole); exists {
+		if r, ok := roleVal.(domain.UserRole); ok {
+			userRole = r
+		}
+	}
+
+	resp, err := h.caseService.GetByIDScoped(c.Request.Context(), id, userRole, userStructureID)
 	if err != nil {
+		if strings.Contains(err.Error(), "Access denied") || strings.Contains(err.Error(), "የስልጣን ወሰን") {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}

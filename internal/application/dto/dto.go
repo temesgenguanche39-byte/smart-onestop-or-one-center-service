@@ -147,6 +147,8 @@ type UserDTO struct {
 	StructureID   *uint             `json:"structure_id,omitempty"`
 	StructureName string            `json:"structure_name,omitempty"`
 	AdminLevel    domain.AdminLevel `json:"admin_level,omitempty"`
+	SubCityName   string            `json:"sub_city_name,omitempty"`
+	WoredaName    string            `json:"woreda_name,omitempty"`
 }
 
 type CreateUserRequest struct {
