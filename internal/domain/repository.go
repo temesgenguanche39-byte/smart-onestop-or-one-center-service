@@ -87,3 +87,15 @@ type ServiceTypeRepository interface {
 	ListAll(ctx context.Context) ([]ServiceType, error)
 	Create(ctx context.Context, st *ServiceType) error
 }
+
+// HolidayRepository defines holiday persistence operations
+type HolidayRepository interface {
+	Create(ctx context.Context, h *Holiday) error
+	GetByID(ctx context.Context, id uint) (*Holiday, error)
+	GetByDate(ctx context.Context, date time.Time) (*Holiday, error)
+	ListByYear(ctx context.Context, year int) ([]Holiday, error)
+	ListAll(ctx context.Context) ([]Holiday, error)
+	Update(ctx context.Context, h *Holiday) error
+	Delete(ctx context.Context, id uint) error
+	IsHoliday(ctx context.Context, date time.Time, structureID *uint) (bool, error)
+}

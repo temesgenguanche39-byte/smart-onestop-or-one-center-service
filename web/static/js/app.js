@@ -303,6 +303,8 @@ const i18n = {
     hearingDesk: "Wed & Fri Digital Hearings",
     bottleneckHeatmap: "Administrative Bottleneck Heatmap",
     auditLedger: "Immutable Audit Ledger",
+    calendarSettings: "Calendar",
+    officialCalendar: "Civic Calendar & Holidays",
     hearingTitle: "Digital Hearing Desk (Wednesdays & Fridays)",
     hearingSubtitle: "In-app virtual hearing room scheduler replacing in-person office queues per municipal protocol.",
     selectHearingDay: "Select Presiding Hearing Session:",
@@ -395,6 +397,8 @@ const i18n = {
     hearingDesk: "የዕሮብ እና አርብ ችሎቶች",
     bottleneckHeatmap: "የአስተዳደር ክፍተቶች መረጃ (Heatmap)",
     auditLedger: "የማይለወጥ የታሪክ መዝገብ (Audit)",
+    calendarSettings: "የቀን መቁጠሪያ",
+    officialCalendar: "የስራ ቀናትና በዓላት",
     hearingTitle: "የዲጂታል ችሎት ማዕከል (ዕሮብ እና አርብ)",
     hearingSubtitle: "በቀጥታ ቪዲዮ ውይይት ከኃላፊዎች ጋር በመገናኘት ውሳኔ የሚያገኙበት መድረክ።",
     selectHearingDay: "የችሎት ቀን ይምረጡ፦",
@@ -660,6 +664,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDatePickerDefaults();
 });
 
+// Civic Date Formatting Helper (Bilingual EN/አማርኛ & Ethiopian Calendar)
+function formatCivicDate(val, opts = {}) {
+  if (!val) return '--';
+  if (window.CivicCalendar && typeof window.CivicCalendar.formatCivicDate === 'function') {
+    return window.CivicCalendar.formatCivicDate(val, { lang: currentLang, ...opts });
+  }
+  try {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? String(val) : d.toLocaleString();
+  } catch {
+    return String(val);
+  }
+}
+
+// Calendar Settings Modal Handlers
+function openCalendarSettingsModal() {
+  const modal = document.getElementById('calendarSettingsModal');
+  if (!modal) return;
+  if (window.CivicCalendar) {
+    const sel = document.getElementById('calDisplayModeSelect');
+    if (sel) sel.value = window.CivicCalendar.getCalendarDisplayMode();
+    const chk = document.getElementById('calGeezNumeralsCheckbox');
+    if (chk) chk.checked = window.CivicCalendar.isGeezNumeralsEnabled();
+  }
+  modal.classList.remove('hidden');
+}
+
+function saveCalendarSettings() {
+  if (window.CivicCalendar) {
+    const sel = document.getElementById('calDisplayModeSelect');
+    if (sel) window.CivicCalendar.setCalendarDisplayMode(sel.value);
+    const chk = document.getElementById('calGeezNumeralsCheckbox');
+    if (chk) window.CivicCalendar.setGeezNumeralsEnabled(chk.checked);
+  }
+  closeModal('calendarSettingsModal');
+  if (typeof showToast === 'function') {
+    showToast('Calendar preferences saved successfully', 'success');
+  }
+  if (typeof allCases !== 'undefined' && allCases && allCases.length > 0 && document.getElementById('casesTableBody')) {
+    renderCasesTable(allCases);
+  }
+}
+
 // Set Bilingual Language
 function setLanguage(lang) {
   currentLang = lang;
@@ -677,6 +724,14 @@ function setLanguage(lang) {
     document.body.classList.add('amharic-mode');
   } else {
     document.body.classList.remove('amharic-mode');
+  }
+
+  // Update dynamic calendar views & badges to reflect language immediately
+  if (window.CivicCalendar && document.getElementById('offCalendarTab') && document.getElementById('offCalendarTab').classList.contains('active')) {
+    window.CivicCalendar.initCalendarPage();
+  }
+  if (typeof allCases !== 'undefined' && allCases && allCases.length > 0 && document.getElementById('casesTableBody')) {
+    renderCasesTable(allCases);
   }
 }
 
@@ -709,7 +764,7 @@ function showCitizenTab(tab) {
 
 // Switch Official Tabs
 function showOfficialTab(tab) {
-  const tabs = ['cases', 'hearings', 'heatmap', 'audit', 'users'];
+  const tabs = ['cases', 'hearings', 'calendar', 'heatmap', 'audit', 'users'];
   tabs.forEach(t => {
     const btn = document.getElementById('offTab' + capitalize(t));
     const content = document.getElementById('off' + capitalize(t) + 'Tab');
@@ -718,6 +773,9 @@ function showOfficialTab(tab) {
   });
   if (tab === 'users') {
     loadOfficialUsers();
+  }
+  if (tab === 'calendar' && window.CivicCalendar) {
+    window.CivicCalendar.initCalendarPage();
   }
 }
 
@@ -1381,7 +1439,7 @@ function renderDetailedTicketCard(c, container) {
       <div class="virtual-hearing-alert">
         <div class="hearing-alert-info">
           <h4>📅 Presiding Virtual Hearing Confirmed</h4>
-          <p>Date: <strong>${hs.hearing_date}</strong> (10:00 - 10:30) with <strong>${hs.official_name || 'tamrat teshale'}</strong></p>
+          <p>Date: <strong>${formatCivicDate(hs.hearing_date)}</strong> (10:00 - 10:30) with <strong>${hs.official_name || 'tamrat teshale'}</strong></p>
           <p style="font-size:0.8rem; margin-top:0.25rem;">Meeting instructions: ${hs.hearing_notes || 'Please have your original documentation ready.'}</p>
         </div>
         <a href="${hs.meeting_link}" target="_blank" class="btn btn-primary btn-sm">
@@ -1399,7 +1457,7 @@ function renderDetailedTicketCard(c, container) {
         <h4>🛡️ Official Administrative Resolution & Ruling</h4>
         <p style="font-size:0.95rem; margin-bottom:0.5rem;">${c.resolution_summary || 'Resolved per municipal guidelines.'}</p>
         <div style="font-size:0.75rem; color:#94a3b8;">
-          Presiding Officer: <strong>${c.resolved_by_name || 'Municipal Director'}</strong> • Timestamp: ${c.resolved_at ? new Date(c.resolved_at).toLocaleString() : 'Certified'}
+          Presiding Officer: <strong>${c.resolved_by_name || 'Municipal Director'}</strong> • Timestamp: ${c.resolved_at ? formatCivicDate(c.resolved_at, { showTime: true }) : 'Certified'}
         </div>
       </div>
     `;
@@ -1466,7 +1524,7 @@ function renderDetailedTicketCard(c, container) {
           </div>
           <div class="info-row">
             <div class="info-label">Lodged At:</div>
-            <div class="info-value">${new Date(c.created_at).toLocaleString()}</div>
+            <div class="info-value">${formatCivicDate(c.created_at, { showTime: true })}</div>
           </div>
         </div>
 
@@ -1929,7 +1987,7 @@ function renderAuditLedger(logs) {
       <div class="audit-item-icon">🛡️</div>
       <div style="flex:1;">
         <div class="audit-action-title">${l.action}</div>
-        <div class="audit-meta">Performer: <strong>${l.performer_name}</strong> • ${new Date(l.created_at).toLocaleString()}</div>
+        <div class="audit-meta">Performer: <strong>${l.performer_name}</strong> • ${formatCivicDate(l.created_at, { showTime: true })}</div>
         <div class="audit-notes">${l.notes || 'System action executed.'}</div>
       </div>
     `;
@@ -1979,14 +2037,20 @@ function renderCasesTable(cases) {
     const remainingHrs = c.remaining_hours ? c.remaining_hours.toFixed(1) : 0;
 
     let slaTag = '';
-    if (c.status === 'RESOLVED') {
-      slaTag = `<span class="sla-tag normal">Completed</span>`;
-    } else if (isBreached) {
-      slaTag = `<span class="sla-tag breached">⚠️ Overdue (${Math.abs(remainingHrs)}h)</span>`;
-    } else if (remainingHrs < 6) {
-      slaTag = `<span class="sla-tag warning">${remainingHrs}h remaining</span>`;
+    if (window.CivicCalendar && typeof window.CivicCalendar.renderWorkingDaysBadge === 'function') {
+      slaTag = window.CivicCalendar.renderWorkingDaysBadge(c);
     } else {
-      slaTag = `<span class="sla-tag normal">${remainingHrs}h remaining</span>`;
+      const isBreached = c.is_breached;
+      const remainingHrs = c.remaining_hours ? c.remaining_hours.toFixed(1) : 0;
+      if (c.status === 'RESOLVED') {
+        slaTag = `<span class="sla-tag normal">Completed</span>`;
+      } else if (isBreached) {
+        slaTag = `<span class="sla-tag breached">⚠️ Overdue (${Math.abs(remainingHrs)}h)</span>`;
+      } else if (remainingHrs < 6) {
+        slaTag = `<span class="sla-tag warning">${remainingHrs}h remaining</span>`;
+      } else {
+        slaTag = `<span class="sla-tag normal">${remainingHrs}h remaining</span>`;
+      }
     }
 
     const tr = document.createElement('tr');
@@ -2143,7 +2207,7 @@ function renderCaseDetailModalContent(c) {
   const priorityEl = document.getElementById('cdPriorityBadge');
   priorityEl.innerHTML = `<span class="badge badge-${priority.toLowerCase()}" style="font-weight:700;">${priority}</span>`;
   
-  document.getElementById('cdLodgedDate').textContent = c.created_at ? new Date(c.created_at).toLocaleString() : new Date().toLocaleString();
+  document.getElementById('cdLodgedDate').textContent = c.created_at ? formatCivicDate(c.created_at, { showTime: true }) : formatCivicDate(new Date(), { showTime: true });
   document.getElementById('cdGrievanceText').textContent = c.description || c.title || '-- No description recorded --';
 
   // Virtual Hearing section
@@ -2151,7 +2215,7 @@ function renderCaseDetailModalContent(c) {
   if (c.hearing_slots && c.hearing_slots.length > 0) {
     const h = c.hearing_slots[0];
     hearingSection.style.display = 'block';
-    document.getElementById('cdHearingDate').textContent = h.hearing_date || 'Upcoming';
+    document.getElementById('cdHearingDate').textContent = h.hearing_date ? formatCivicDate(h.hearing_date) : 'Upcoming';
     document.getElementById('cdHearingTime').textContent = `${h.start_time || '10:00'} - ${h.end_time || '10:30'}`;
     document.getElementById('cdHearingOfficer').textContent = h.official_name || 'Assigned Officer';
     const roomLink = document.getElementById('cdHearingRoomLink');
@@ -2165,7 +2229,7 @@ function renderCaseDetailModalContent(c) {
   if (c.status === 'RESOLVED') {
     resSection.style.display = 'block';
     document.getElementById('cdResolvedBy').textContent = c.resolved_by_name || 'Certified Municipal Official';
-    document.getElementById('cdResolvedAt').textContent = c.resolved_at ? new Date(c.resolved_at).toLocaleString() : 'Recently';
+    document.getElementById('cdResolvedAt').textContent = c.resolved_at ? formatCivicDate(c.resolved_at, { showTime: true }) : 'Recently';
     document.getElementById('cdResolutionSummary').textContent = c.resolution_summary || 'The grievance has been reviewed, certified, and officially resolved.';
   } else {
     resSection.style.display = 'none';
@@ -2217,7 +2281,7 @@ function renderCaseDetailDocuments(attachments) {
     const isPdf = (att.file_name || '').toLowerCase().includes('.pdf') || (att.mime_type || '').includes('pdf');
     const isImg = (att.mime_type || '').startsWith('image/') || /\.(png|jpe?g|webp|gif)$/i.test(att.file_name || '');
     const icon = isPdf ? '📄' : (isImg ? '🖼️' : '📑');
-    const uploadTime = att.uploaded_at ? new Date(att.uploaded_at).toLocaleString() : 'Just now';
+    const uploadTime = att.uploaded_at ? formatCivicDate(att.uploaded_at, { showTime: true }) : 'Just now';
 
     const card = document.createElement('div');
     card.className = 'cd-evidence-card';
@@ -2276,7 +2340,7 @@ function renderCaseDetailAudio(attachments) {
   }
 
   audioAttachments.forEach(att => {
-    const uploadTime = att.uploaded_at ? new Date(att.uploaded_at).toLocaleString() : 'Just now';
+    const uploadTime = att.uploaded_at ? formatCivicDate(att.uploaded_at, { showTime: true }) : 'Just now';
     
     // Ensure file_url is 100% playable without 404: if it's a legacy /uploads/ path, provide synthesized WAV chime
     let playableUrl = att.file_url;
@@ -2343,7 +2407,7 @@ function previewCaseDocument(attId) {
   const ocrText = document.getElementById('dpModalOcrText');
 
   titleEl.textContent = att.file_name;
-  metaEl.textContent = `${att.mime_type || 'Document'} • Uploaded: ${att.uploaded_at ? new Date(att.uploaded_at).toLocaleString() : 'Registered'}`;
+  metaEl.textContent = `${att.mime_type || 'Document'} • Uploaded: ${att.uploaded_at ? formatCivicDate(att.uploaded_at, { showTime: true }) : 'Registered'}`;
   
   if (att.extracted_ocr_text) {
     ocrBox.style.display = 'block';
@@ -2603,7 +2667,7 @@ function renderCaseDetailAuditLogs(logs) {
       <div class="cd-timeline-dot"></div>
       <div class="cd-timeline-header">
         <span class="cd-timeline-action">${l.action || 'AUDIT_EVENT'}</span>
-        <span class="cd-timeline-time">${l.created_at ? new Date(l.created_at).toLocaleString() : ''}</span>
+        <span class="cd-timeline-time">${l.created_at ? formatCivicDate(l.created_at, { showTime: true }) : ''}</span>
       </div>
       <div class="cd-timeline-body">
         <div style="font-weight:600; color:var(--cyan-400); margin-bottom:2px;">Performer: ${l.performer_name || 'Municipal Official'}</div>

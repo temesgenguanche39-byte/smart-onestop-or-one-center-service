@@ -72,6 +72,7 @@ type Case struct {
 	Status             CaseStatus               `gorm:"size:30;default:'SUBMITTED';index" json:"status"`
 	Priority           Priority                 `gorm:"size:20;default:'NORMAL'" json:"priority"`
 	SLADeadline        time.Time                `gorm:"not null;index" json:"sla_deadline"`
+	WorkingDaysRemaining float64                `gorm:"default:0" json:"working_days_remaining"`
 	IsEscalated        bool                     `gorm:"default:false;index" json:"is_escalated"`
 	EscalationCount    int                      `gorm:"default:0" json:"escalation_count"`
 	ResolutionSummary  string                   `gorm:"type:text" json:"resolution_summary,omitempty"`
@@ -136,4 +137,20 @@ type EscalationPolicy struct {
 	MaxResolutionHours     int        `gorm:"not null" json:"max_resolution_hours"`
 	WarningThresholdHours int        `gorm:"not null" json:"warning_threshold_hours"`
 	IsActive               bool       `gorm:"default:true" json:"is_active"`
+}
+
+// Holiday represents Ethiopian public, national and religious holidays
+type Holiday struct {
+	ID          uint                     `gorm:"primaryKey;autoIncrement" json:"id"`
+	Date        time.Time                `gorm:"type:date;not null;index" json:"date"`
+	NameEN      string                   `gorm:"size:150;not null" json:"name_en"`
+	NameAM      string                   `gorm:"size:150;not null" json:"name_am"`
+	Type        HolidayType              `gorm:"size:20;not null;index" json:"type"` // FIXED, MOVABLE, ISLAMIC
+	Active      bool                     `gorm:"default:true;index" json:"active"`
+	Source      string                   `gorm:"size:100" json:"source"`
+	Year        int                      `gorm:"not null;index" json:"year"`
+	StructureID *uint                    `gorm:"index" json:"structure_id,omitempty"`
+	Structure   *AdministrativeStructure `gorm:"foreignKey:StructureID" json:"structure,omitempty"`
+	CreatedAt   time.Time                `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt   time.Time                `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }

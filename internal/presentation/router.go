@@ -20,6 +20,7 @@ type RouterConfig struct {
 	HearingHandler   *handler.HearingHandler
 	StructureHandler *handler.StructureHandler
 	AnalyticsHandler *handler.AnalyticsHandler
+	CalendarHandler  *handler.CalendarHandler
 }
 
 // SetupRouter initializes the Gin router with all middleware, routes and static assets
@@ -83,6 +84,11 @@ func SetupRouter(rc *RouterConfig) *gin.Engine {
 		api.GET("/cases/ticket/:ticket", rc.CaseHandler.GetByTicket)
 		api.GET("/cases/verify/:qr", rc.CaseHandler.VerifyQR)
 
+		// Public Ethiopian Working Calendar & Holiday Information
+		api.GET("/calendar/working-days", rc.CalendarHandler.GetWorkingDays)
+		api.GET("/calendar/holidays", rc.CalendarHandler.GetHolidays)
+		api.GET("/calendar/next-hearing-slots", rc.CalendarHandler.GetNextHearingSlots)
+
 		// Official Authentication
 		api.POST("/auth/login", rc.AuthHandler.Login)
 
@@ -132,7 +138,29 @@ func SetupRouter(rc *RouterConfig) *gin.Engine {
 			authorized.GET("/users", rc.AuthHandler.ListUsers)
 			authorized.POST("/users", rc.AuthHandler.CreateUser)
 			authorized.DELETE("/users/:id", rc.AuthHandler.DeleteUser)
+
+			// Public Holiday Management (SUPER_ADMIN only)
+			adminOnly := authorized.Group("")
+			adminOnly.Use(middleware.RequireRoles(domain.RoleSuperAdmin))
+			{
+				adminOnly.POST("/calendar/holidays", rc.CalendarHandler.CreateHoliday)
+				adminOnly.PUT("/calendar/holidays/:id", rc.CalendarHandler.UpdateHoliday)
+				adminOnly.DELETE("/calendar/holidays/:id", rc.CalendarHandler.DeleteHoliday)
+
+				adminOnly.POST("/holidays", rc.CalendarHandler.CreateHoliday)
+				adminOnly.PUT("/holidays/:id", rc.CalendarHandler.UpdateHoliday)
+				adminOnly.DELETE("/holidays/:id", rc.CalendarHandler.DeleteHoliday)
+			}
 		}
+	}
+
+	// Top-level aliases for /holidays for SUPER_ADMIN
+	holidaysRoot := r.Group("/holidays")
+	holidaysRoot.Use(middleware.AuthRequired(rc.JWTManager), middleware.RequireRoles(domain.RoleSuperAdmin))
+	{
+		holidaysRoot.POST("", rc.CalendarHandler.CreateHoliday)
+		holidaysRoot.PUT("/:id", rc.CalendarHandler.UpdateHoliday)
+		holidaysRoot.DELETE("/:id", rc.CalendarHandler.DeleteHoliday)
 	}
 
 	return r

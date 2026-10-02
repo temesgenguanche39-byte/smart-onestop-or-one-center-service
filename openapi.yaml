@@ -263,6 +263,128 @@ paths:
         '200':
           description: List of scheduled hearings for the day
 
+  /api/v1/calendar/working-days:
+    get:
+      summary: Count Ethiopian Working Days Between Two Dates
+      description: Computes business days skipping weekends and public holidays across Ethiopian and Gregorian calendars.
+      tags: [Ethiopian Working Calendar]
+      parameters:
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+          example: "2026-10-01"
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+          example: "2026-10-15"
+        - in: query
+          name: calendar
+          schema:
+            type: string
+            enum: [gregorian, ethiopian]
+            default: gregorian
+      responses:
+        '200':
+          description: Working days calculation breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkingDaysResponse'
+
+  /api/v1/calendar/holidays:
+    get:
+      summary: List Ethiopian Public Holidays
+      description: Returns canonical public, Orthodox Christian, and moon-based Islamic holidays.
+      tags: [Ethiopian Working Calendar]
+      parameters:
+        - in: query
+          name: year
+          schema:
+            type: integer
+          example: 2026
+      responses:
+        '200':
+          description: List of holidays for the specified year
+    post:
+      summary: Create Public Holiday (SUPER_ADMIN Only)
+      tags: [Ethiopian Working Calendar]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHolidayRequest'
+      responses:
+        '201':
+          description: Holiday registered successfully
+
+  /api/v1/calendar/holidays/{id}:
+    put:
+      summary: Update Public Holiday (SUPER_ADMIN Only)
+      tags: [Ethiopian Working Calendar]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHolidayRequest'
+      responses:
+        '200':
+          description: Holiday updated successfully
+    delete:
+      summary: Delete Public Holiday (SUPER_ADMIN Only)
+      tags: [Ethiopian Working Calendar]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Holiday deleted successfully
+
+  /api/v1/calendar/next-hearing-slots:
+    get:
+      summary: Get Next Valid Hearing Appointment Slots
+      description: Returns upcoming Wednesday and Friday slots that are not public holidays.
+      tags: [Ethiopian Working Calendar]
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          example: "2026-10-02"
+        - in: query
+          name: count
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: Available hearing slots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextHearingSlotsResponse'
+
   /api/v1/analytics/dashboard:
     get:
       summary: Executive Analytics & Bottleneck Heatmap
@@ -382,6 +504,9 @@ components:
           format: date-time
         remaining_hours:
           type: number
+        working_days_remaining:
+          type: number
+          description: Remaining business days excluding holidays and weekends
         is_breached:
           type: boolean
         is_escalated:
@@ -477,3 +602,110 @@ components:
           type: integer
         avg_resolution_hours:
           type: number
+
+    WorkingDaysResponse:
+      type: object
+      properties:
+        from_gregorian:
+          type: string
+        to_gregorian:
+          type: string
+        from_ethiopian:
+          type: string
+        to_ethiopian:
+          type: string
+        working_days:
+          type: number
+        total_calendar_days:
+          type: integer
+        holidays_encountered:
+          type: integer
+        weekend_days_skipped:
+          type: integer
+
+    HolidayResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        ethiopian_date:
+          type: string
+        ethiopian_date_am:
+          type: string
+        name_en:
+          type: string
+        name_am:
+          type: string
+        type:
+          type: string
+          enum: [FIXED, MOVABLE, ISLAMIC]
+        active:
+          type: boolean
+        source:
+          type: string
+        year:
+          type: integer
+
+    CreateHolidayRequest:
+      type: object
+      required: [date, name_en, name_am, type]
+      properties:
+        date:
+          type: string
+          example: "2026-10-09"
+        name_en:
+          type: string
+        name_am:
+          type: string
+        type:
+          type: string
+          enum: [FIXED, MOVABLE, ISLAMIC]
+        active:
+          type: boolean
+        source:
+          type: string
+        year:
+          type: integer
+
+    UpdateHolidayRequest:
+      type: object
+      properties:
+        date:
+          type: string
+        name_en:
+          type: string
+        name_am:
+          type: string
+        type:
+          type: string
+        active:
+          type: boolean
+        source:
+          type: string
+        year:
+          type: integer
+
+    NextHearingSlotsResponse:
+      type: object
+      properties:
+        from:
+          type: string
+        count:
+          type: integer
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              ethiopian_date:
+                type: string
+              day_of_week:
+                type: string
+              day_of_week_am:
+                type: string
+              is_working_day:
+                type: boolean

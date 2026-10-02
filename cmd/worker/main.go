@@ -32,6 +32,8 @@ func main() {
 	caseRepo := repository.NewGormCaseRepository(db)
 	structureRepo := repository.NewGormStructureRepository(db)
 	auditRepo := repository.NewGormAuditRepository(db)
+	holidayRepo := repository.NewGormHolidayRepository(db)
+	_ = service.NewCalendarService(holidayRepo, auditRepo)
 
 	redisClient := redis.NewClient(cfg.RedisURL)
 	slaService := service.NewSLAService(caseRepo, structureRepo, auditRepo)

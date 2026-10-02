@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/smart-onestop/platform/internal/application/dto"
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/domain/workcalendar"
 )
 
 type CaseService struct {
@@ -88,7 +89,8 @@ func (s *CaseService) CreateCase(ctx context.Context, req dto.CreateCaseRequest)
 	if slaHours <= 0 {
 		slaHours = 48
 	}
-	slaDeadline := now.Add(time.Duration(slaHours) * time.Hour)
+	slaDeadline := workcalendar.AddWorkingHours(now, float64(slaHours))
+	workingDaysRem := workcalendar.CountWorkingDays(now, slaDeadline)
 
 	priority := req.Priority
 	if priority == "" {
@@ -96,20 +98,21 @@ func (s *CaseService) CreateCase(ctx context.Context, req dto.CreateCaseRequest)
 	}
 
 	caseEntity := &domain.Case{
-		ID:                 uuid.New(),
-		TicketNumber:       ticketNum,
-		CitizenID:          citizen.ID,
-		Citizen:            citizen,
-		ServiceTypeID:      serviceType.ID,
-		ServiceType:        serviceType,
-		CurrentStructureID: structNode.ID,
-		CurrentStructure:   structNode,
-		Title:              req.Title,
-		Description:        req.Description,
-		Status:             domain.StatusSubmitted,
-		Priority:           priority,
-		SLADeadline:        slaDeadline,
-		IsEscalated:        false,
+		ID:                   uuid.New(),
+		TicketNumber:         ticketNum,
+		CitizenID:            citizen.ID,
+		Citizen:              citizen,
+		ServiceTypeID:        serviceType.ID,
+		ServiceType:          serviceType,
+		CurrentStructureID:   structNode.ID,
+		CurrentStructure:     structNode,
+		Title:                req.Title,
+		Description:          req.Description,
+		Status:               domain.StatusSubmitted,
+		Priority:             priority,
+		SLADeadline:          slaDeadline,
+		WorkingDaysRemaining: workingDaysRem,
+		IsEscalated:          false,
 		EscalationCount:    0,
 		QRVerificationCode: qrPayload,
 		CreatedAt:          now,
@@ -255,13 +258,14 @@ func (s *CaseService) autoIngestIfValidSeal(ctx context.Context, identifier stri
 		Citizen:            citizen,
 		ServiceTypeID:      serviceTypeID,
 		ServiceType:        st,
-		CurrentStructureID: structureID,
-		Title:              "Civic Grievance & Service Request (የተመዘገበ ቅሬታ)",
-		Description:        "Officially certified citizen grievance lodged via One-Stop Civic Cloud. Authenticated through Ethiopian Municipal Cryptographic Seal.",
-		Status:             domain.StatusSubmitted,
-		Priority:           domain.PriorityNormal,
-		SLADeadline:        now.Add(48 * time.Hour),
-		IsEscalated:        false,
+		CurrentStructureID:   structureID,
+		Title:                "Civic Grievance & Service Request (የተመዘገበ ቅሬታ)",
+		Description:          "Officially certified citizen grievance lodged via One-Stop Civic Cloud. Authenticated through Ethiopian Municipal Cryptographic Seal.",
+		Status:               domain.StatusSubmitted,
+		Priority:             domain.PriorityNormal,
+		SLADeadline:          workcalendar.AddWorkingHours(now, 48),
+		WorkingDaysRemaining: workcalendar.CountWorkingDays(now, workcalendar.AddWorkingHours(now, 48)),
+		IsEscalated:          false,
 		EscalationCount:    0,
 		QRVerificationCode: qrCode,
 		CreatedAt:          now,
@@ -542,7 +546,8 @@ func (s *CaseService) ManualEscalate(ctx context.Context, caseID uuid.UUID, perf
 	c.CurrentStructureID = parentStruct.ID
 	c.IsEscalated = true
 	c.EscalationCount++
-	c.SLADeadline = now.Add(24 * time.Hour) // Extend SLA by 24h
+	c.SLADeadline = workcalendar.AddWorkingHours(now, 24) // Extend SLA by 24 working hours
+	c.WorkingDaysRemaining = workcalendar.CountWorkingDays(now, c.SLADeadline)
 	c.UpdatedAt = now
 
 	if currentStruct.Level == domain.AdminLevelWoreda {
@@ -669,6 +674,14 @@ func mapToCaseResponse(c *domain.Case) dto.CaseResponse {
 	diff := c.SLADeadline.Sub(now).Hours()
 	isBreached := diff < 0 && c.Status != domain.StatusResolved && c.Status != domain.StatusRejected
 
+	workingDaysRemaining := c.WorkingDaysRemaining
+	if c.Status != domain.StatusResolved && c.Status != domain.StatusRejected {
+		workingDaysRemaining = workcalendar.CountWorkingDays(now, c.SLADeadline)
+		if workingDaysRemaining < 0 {
+			workingDaysRemaining = 0
+		}
+	}
+
 	citizenName := ""
 	citizenPhone := ""
 	if c.Citizen != nil {
@@ -694,25 +707,26 @@ func mapToCaseResponse(c *domain.Case) dto.CaseResponse {
 	}
 
 	return dto.CaseResponse{
-		ID:                 c.ID,
-		TicketNumber:       c.TicketNumber,
-		CitizenName:        citizenName,
-		CitizenPhone:       citizenPhone,
-		ServiceTypeName:    serviceName,
-		CurrentStructureID: c.CurrentStructureID,
-		CurrentStructure:   structName,
-		StructureLevel:     level,
-		AssignedToName:     assignedName,
-		Title:              c.Title,
-		Status:             c.Status,
-		Priority:           c.Priority,
-		SLADeadline:        c.SLADeadline,
-		RemainingHours:     diff,
-		IsBreached:         isBreached,
-		IsEscalated:        c.IsEscalated,
-		EscalationCount:    c.EscalationCount,
-		QRVerificationCode: c.QRVerificationCode,
-		CreatedAt:          c.CreatedAt,
+		ID:                   c.ID,
+		TicketNumber:         c.TicketNumber,
+		CitizenName:          citizenName,
+		CitizenPhone:         citizenPhone,
+		ServiceTypeName:      serviceName,
+		CurrentStructureID:   c.CurrentStructureID,
+		CurrentStructure:     structName,
+		StructureLevel:       level,
+		AssignedToName:       assignedName,
+		Title:                c.Title,
+		Status:               c.Status,
+		Priority:             c.Priority,
+		SLADeadline:          c.SLADeadline,
+		RemainingHours:       diff,
+		WorkingDaysRemaining: workingDaysRemaining,
+		IsBreached:           isBreached,
+		IsEscalated:          c.IsEscalated,
+		EscalationCount:      c.EscalationCount,
+		QRVerificationCode:   c.QRVerificationCode,
+		CreatedAt:            c.CreatedAt,
 	}
 }
 

@@ -61,3 +61,12 @@ const (
 	HearingStatusMissedByCitizen     HearingStatus = "MISSED_BY_CITIZEN"
 	HearingStatusCancelledByOfficial HearingStatus = "CANCELLED_BY_OFFICIAL"
 )
+
+// HolidayType represents the calculation nature of public holidays
+type HolidayType string
+
+const (
+	HolidayTypeFixed   HolidayType = "FIXED"
+	HolidayTypeMovable HolidayType = "MOVABLE"
+	HolidayTypeIslamic HolidayType = "ISLAMIC"
+)

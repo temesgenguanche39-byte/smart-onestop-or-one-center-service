@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/domain/workcalendar"
 	"github.com/smart-onestop/platform/internal/infrastructure/security"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ func SeedDatabase(db *gorm.DB) error {
 	db.Model(&domain.AdministrativeStructure{}).Count(&count)
 	if count > 0 {
 		log.Println("[DB Seeder] Database already populated with seed data.")
+		_ = SeedHolidays(db)
 		return nil
 	}
 
@@ -309,6 +311,7 @@ func SeedDatabase(db *gorm.DB) error {
 	})
 
 	log.Println("[DB Seeder] Database seeded with 3 municipal tiers, 5 service types, 5 staff accounts, and 3 active/breached cases.")
+	_ = SeedHolidays(db)
 	return nil
 }
 
@@ -319,4 +322,104 @@ func getNextWeekday(from time.Time, target time.Weekday) time.Time {
 	}
 	next := from.AddDate(0, 0, days)
 	return time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// SeedHolidays seeds the canonical Ethiopian public, national, Orthodox and Islamic holidays
+func SeedHolidays(db *gorm.DB) error {
+	var count int64
+	db.Model(&domain.Holiday{}).Count(&count)
+	if count > 0 {
+		return nil
+	}
+
+	log.Println("[DB Seeder] Seeding Ethiopian canonical public holidays across 2024-2028...")
+	loc := workcalendar.AddisAbabaLocation()
+
+	// Islamic Moon-based holidays verified from Ethiopian Supreme Council of Islamic Affairs
+	type islamicHolidayEntry struct {
+		Date   string
+		NameEN string
+		NameAM string
+		Year   int
+	}
+
+	islamicHolidays := []islamicHolidayEntry{
+		// 2024
+		{"2024-04-10", "Eid al-Fitr", "ዒድ አል-ፊጥር (የጾም ፍቺ በዓል)", 2024},
+		{"2024-06-17", "Eid al-Adha (Arefa)", "ዒድ አል-አድሃ (አረፋ)", 2024},
+		{"2024-09-16", "Mawlid (Birth of the Prophet)", "መውሊድ (የነቢዩ ሙሐመድ የልደት በዓል)", 2024},
+		// 2025
+		{"2025-03-31", "Eid al-Fitr", "ዒድ አል-ፊጥር (የጾም ፍቺ በዓል)", 2025},
+		{"2025-06-07", "Eid al-Adha (Arefa)", "ዒድ አል-አድሃ (አረፋ)", 2025},
+		{"2025-09-05", "Mawlid (Birth of the Prophet)", "መውሊድ (የነቢዩ ሙሐመድ የልደት በዓል)", 2025},
+		// 2026
+		{"2026-03-20", "Eid al-Fitr", "ዒድ አል-ፊጥር (የጾም ፍቺ በዓል)", 2026},
+		{"2026-05-27", "Eid al-Adha (Arefa)", "ዒድ አል-አድሃ (አረፋ)", 2026},
+		{"2026-08-25", "Mawlid (Birth of the Prophet)", "መውሊድ (የነቢዩ ሙሐመድ የልደት በዓል)", 2026},
+		// 2027
+		{"2027-03-10", "Eid al-Fitr", "ዒድ አል-ፊጥር (የጾም ፍቺ በዓል)", 2027},
+		{"2027-05-17", "Eid al-Adha (Arefa)", "ዒድ አል-አድሃ (አረፋ)", 2027},
+		{"2027-08-15", "Mawlid (Birth of the Prophet)", "መውሊድ (የነቢዩ ሙሐመድ የልደት በዓል)", 2027},
+		// 2028
+		{"2028-02-27", "Eid al-Fitr", "ዒድ አል-ፊጥር (የጾም ፍቺ በዓል)", 2028},
+		{"2028-05-05", "Eid al-Adha (Arefa)", "ዒድ አል-አድሃ (አረፋ)", 2028},
+		{"2028-08-04", "Mawlid (Birth of the Prophet)", "መውሊድ (የነቢዩ ሙሐመድ የልደት በዓል)", 2028},
+	}
+
+	const source = "Federal Democratic Republic of Ethiopia Public Holidays (Proclamation No. 16/1975)"
+
+	for y := 2024; y <= 2028; y++ {
+		// Ethiopian Fixed Holidays in early Gregorian year (Ethiopian Year: y - 8)
+		ethEarlyYear := y - 8
+		gennaDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethEarlyYear, Month: 4, Day: 29})
+		timketDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethEarlyYear, Month: 5, Day: 11})
+		adwaDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethEarlyYear, Month: 6, Day: 23})
+		labourDate := time.Date(y, time.May, 1, 0, 0, 0, 0, loc)
+		patriotsDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethEarlyYear, Month: 8, Day: 27})
+		dergDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethEarlyYear, Month: 9, Day: 20})
+
+		// Ethiopian Fixed Holidays in late Gregorian year (Ethiopian Year: y - 7)
+		ethLateYear := y - 7
+		enkutatashDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethLateYear, Month: 1, Day: 1})
+		meskelDate := workcalendar.ToGregorianDate(workcalendar.EthiopianDate{Year: ethLateYear, Month: 1, Day: 17})
+
+		// Orthodox Movable Holidays
+		sikletDate := workcalendar.OrthodoxGoodFriday(y)
+		fasikaDate := workcalendar.OrthodoxEaster(y)
+
+		holidays := []domain.Holiday{
+			{Date: gennaDate, NameEN: "Genna (Ethiopian Christmas)", NameAM: "ገና (የገና / የልደት በዓል)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: timketDate, NameEN: "Timket (Epiphany)", NameAM: "ጥምቀት (የጥምቀት በዓል)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: adwaDate, NameEN: "Adwa Victory Day", NameAM: "የአድዋ ድል በዓል", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: labourDate, NameEN: "International Labour Day", NameAM: "የሰራተኞች ቀን (ሜይ ዴይ)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: patriotsDate, NameEN: "Patriots' Victory Day", NameAM: "የአርበኞች ቀን", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: dergDate, NameEN: "Derg Downfall Day", NameAM: "የደርግ ውድቀት ቀን (ግንቦት 20)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: enkutatashDate, NameEN: "Enkutatash (Ethiopian New Year)", NameAM: "እንቁጣጣሽ (የአዲስ ዓመት በዓል)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: meskelDate, NameEN: "Meskel (Finding of the True Cross)", NameAM: "መስቀል (የመስቀል ደመራ በዓል)", Type: domain.HolidayTypeFixed, Active: true, Source: source, Year: y},
+			{Date: sikletDate, NameEN: "Good Friday (Siklet)", NameAM: "ስቅለት (የስቅለት በዓል)", Type: domain.HolidayTypeMovable, Active: true, Source: source, Year: y},
+			{Date: fasikaDate, NameEN: "Easter (Fasika)", NameAM: "ፋሲካ (የትንሣኤ በዓል)", Type: domain.HolidayTypeMovable, Active: true, Source: source, Year: y},
+		}
+
+		for _, h := range holidays {
+			db.Create(&h)
+		}
+	}
+
+	// Seed Islamic moon-based holidays
+	for _, ih := range islamicHolidays {
+		d, _ := time.ParseInLocation("2006-01-02", ih.Date, loc)
+		h := domain.Holiday{
+			Date:   d,
+			NameEN: ih.NameEN,
+			NameAM: ih.NameAM,
+			Type:   domain.HolidayTypeIslamic,
+			Active: true,
+			Source: "Ethiopian Supreme Council of Islamic Affairs (Moon-Sighting Observation)",
+			Year:   ih.Year,
+		}
+		db.Create(&h)
+	}
+
+	log.Println("[DB Seeder] Canonical Ethiopian holidays seeded successfully.")
+	return nil
 }

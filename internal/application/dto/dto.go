@@ -51,6 +51,7 @@ type CaseResponse struct {
 	Priority           domain.Priority         `json:"priority"`
 	SLADeadline        time.Time               `json:"sla_deadline"`
 	RemainingHours     float64                 `json:"remaining_hours"`
+	WorkingDaysRemaining float64               `json:"working_days_remaining"`
 	IsBreached         bool                    `json:"is_breached"`
 	IsEscalated        bool                    `json:"is_escalated"`
 	EscalationCount    int                     `json:"escalation_count"`

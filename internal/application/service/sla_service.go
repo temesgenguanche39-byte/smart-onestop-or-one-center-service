@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/domain/workcalendar"
 )
 
 type SLAService struct {
@@ -31,6 +32,12 @@ func NewSLAService(
 // SweepAndEscalate executes the race-condition-free SLA breach auto-escalation
 func (s *SLAService) SweepAndEscalate(ctx context.Context) (int, error) {
 	now := time.Now().UTC()
+
+	// An SLA sweep must not escalate during a holiday or non-working day
+	if !workcalendar.IsWorkingDay(now, "") {
+		log.Printf("[SLA Engine] Today (%s) is a non-working day or holiday in Africa/Addis_Ababa. Skipping SLA breach escalation sweep.", now.Format("2006-01-02"))
+		return 0, nil
+	}
 
 	// 1. Fetch breached cases with row-level locking (SKIP LOCKED)
 	breachedCases, err := s.caseRepo.FetchAndLockBreachedCases(ctx, now, 100)
@@ -70,7 +77,8 @@ func (s *SLAService) SweepAndEscalate(ctx context.Context) (int, error) {
 		c.CurrentStructureID = parentStruct.ID
 		c.IsEscalated = true
 		c.EscalationCount++
-		c.SLADeadline = now.Add(24 * time.Hour) // Mandatory +24h extension per municipal policy
+		c.SLADeadline = workcalendar.AddWorkingHours(now, 24) // Mandatory +24h working hours extension per municipal policy
+		c.WorkingDaysRemaining = workcalendar.CountWorkingDays(now, c.SLADeadline)
 		c.UpdatedAt = now
 
 		actionName := "AUTO_ESCALATED_SLA_BREACH"

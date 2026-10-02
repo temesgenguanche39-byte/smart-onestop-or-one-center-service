@@ -55,6 +55,7 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		&domain.HearingSlot{},
 		&domain.CaseAuditLog{},
 		&domain.EscalationPolicy{},
+		&domain.Holiday{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("database auto-migration failed: %w", err)

@@ -52,6 +52,14 @@
 
         <span class="gov-masthead-sep">|</span>
 
+        <!-- Calendar Display Preferences Toggle -->
+        <button type="button" id="calendarSettingsBtn" class="gov-contrast-btn" onclick="openCalendarSettingsModal()" title="Calendar & Ge'ez Numeral Settings">
+          <span>📅</span>
+          <span data-i18n="calendarSettings">Calendar</span>
+        </button>
+
+        <span class="gov-masthead-sep">|</span>
+
         <!-- Bilingual Language Switcher -->
         <div class="gov-lang-switch">
           <button id="langAmBtn" class="gov-lang-btn amharic-text" onclick="setLanguage('am')">አማርኛ</button>
@@ -603,6 +611,10 @@
           <span class="tab-icon">📅</span>
           <span data-i18n="hearingDesk">Wed & Fri Digital Hearings</span>
         </button>
+        <button id="offTabCalendar" class="tab-btn" onclick="showOfficialTab('calendar')">
+          <span class="tab-icon">🗓️</span>
+          <span data-i18n="officialCalendar">Civic Calendar & Holidays</span>
+        </button>
         <button id="offTabHeatmap" class="tab-btn" onclick="showOfficialTab('heatmap')">
           <span class="tab-icon">📊</span>
           <span data-i18n="bottleneckHeatmap">Administrative Bottleneck Heatmap</span>
@@ -691,10 +703,15 @@
           <div class="hearings-desk-grid">
             <div class="hearing-calendar-sidebar">
               <label class="form-label" data-i18n="selectHearingDay">Select Presiding Hearing Session:</label>
-              <input type="date" id="hearingDatePicker" class="form-input" onchange="loadHearingsForDate()">
+              <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
+                <input type="date" id="hearingDatePicker" class="form-input" onchange="loadHearingsForDate()" style="flex:1;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('hearingDatePicker'), { hearingOnly: true, onSelect: () => loadHearingsForDate() })" title="Pick Ethiopian Hearing Date (Wed/Fri only)">
+                  📅 13-ወር
+                </button>
+              </div>
               <div class="hearing-rule-note">
                 <span class="note-icon">ℹ️</span>
-                <span>Rule: Hearing slots are strictly bound to <strong>Wednesday</strong> or <strong>Friday</strong> municipal dispute calendars.</span>
+                <span>Rule: Hearing slots are strictly bound to <strong>Wednesday</strong> or <strong>Friday</strong> municipal dispute calendars (excluding official public holidays).</span>
               </div>
             </div>
 
@@ -707,6 +724,136 @@
                 <!-- Injected dynamically -->
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: CIVIC CALENDAR & PUBLIC HOLIDAYS -->
+      <div id="offCalendarTab" class="tab-content">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div class="card-header-icon">🗓️</div>
+              <div>
+                <h2 class="card-title">13-Month Ethiopian Civic Calendar & Gazetted Public Holidays</h2>
+                <p class="card-subtitle">Official municipal calendar engine computing statutory SLA working days, Wednesday/Friday digital hearings, and national holiday moratoriums.</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-secondary btn-sm active" id="calModeBtnEth" onclick="CivicCalendar.setCalendarPageMode('ethiopian')">🇪🇹 13 ወራት (Ethiopian)</button>
+              <button class="btn btn-secondary btn-sm" id="calModeBtnGreg" onclick="CivicCalendar.setCalendarPageMode('gregorian')">🌐 Gregorian</button>
+              <button class="btn btn-primary btn-sm" onclick="CivicCalendar.openAddHolidayModal()" id="calBtnAddHoliday" title="Super Admin: Register Moon Sighting / Movable Holiday">
+                <span>➕ Add Public Holiday</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Calendar Month Navigation & Grid -->
+          <div class="civic-cal-wrapper">
+            <div class="civic-cal-month-nav">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(-1)">‹ Previous Month</button>
+              <h3 id="civicCalendarMonthHeading" class="civic-cal-month-title">መስከረም (Meskerem) 2019 ዓ.ም</h3>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.changeCalendarPageMonth(1)">Next Month ›</button>
+            </div>
+
+            <div class="civic-cal-header-bar">
+              <span>ሰኞ<br><small>Mon</small></span>
+              <span>ማክሰኞ<br><small>Tue</small></span>
+              <span class="hearing-col-header">ረቡዕ ⭐<br><small>Wed (Hearings)</small></span>
+              <span>ሐሙስ<br><small>Thu</small></span>
+              <span class="hearing-col-header">ዓርብ ⭐<br><small>Fri (Hearings)</small></span>
+              <span class="weekend-col-header">ቅዳሜ<br><small>Sat</small></span>
+              <span class="weekend-col-header">እሑድ<br><small>Sun</small></span>
+            </div>
+
+            <div id="civicCalendarMonthGrid" class="civic-cal-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Split Row: Working-Day Calculator Tool & Holiday Gazette -->
+          <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem; margin-top: 2rem;">
+            
+            <!-- TOOL: Working-Day Calculator -->
+            <div class="card" style="margin-bottom:0; background:var(--bg-elevated); border:1px solid rgba(56,189,248,0.25);">
+              <div class="card-header" style="padding-bottom:0.75rem;">
+                <div class="card-header-icon" style="font-size:1.2rem;">⏱️</div>
+                <div>
+                  <h3 class="card-title" style="font-size:1.05rem;">Civic Working-Day Calculator</h3>
+                  <p class="card-subtitle" style="font-size:0.75rem;">Calculate exact statutory business days between any two dates excluding weekends and public holidays.</p>
+                </div>
+              </div>
+
+              <div style="padding: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                  <label>Start Date (From) *</label>
+                  <div style="display:flex; gap:0.5rem;">
+                    <input type="date" id="calcFromInput" class="form-input" style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcFromInput'))" title="Pick Ethiopian Date">
+                      📅 13-ወር
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                  <label>End Date (To) *</label>
+                  <div style="display:flex; gap:0.5rem;">
+                    <input type="date" id="calcToInput" class="form-input" style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('calcToInput'))" title="Pick Ethiopian Date">
+                      📅 13-ወር
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label>Input Calendar Format</label>
+                  <select id="calcCalendarSelect" class="form-input">
+                    <option value="gregorian">Gregorian (ISO Standard YYYY-MM-DD)</option>
+                    <option value="ethiopian">Ethiopian (የኢትዮጵያ ዘመን አቆጣጠር)</option>
+                  </select>
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width:100%;" onclick="CivicCalendar.calculateWorkingDaysTool()">
+                  <span>⚡ Calculate Statutory Working Days</span>
+                </button>
+
+                <div id="calcResultsDisplay" style="margin-top: 1rem;">
+                  <!-- Results injected dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- DIRECTORY: Official Gazetted Holidays -->
+            <div class="card" style="margin-bottom:0;">
+              <div class="card-header" style="padding-bottom:0.75rem; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                  <div class="card-header-icon" style="font-size:1.2rem;">📜</div>
+                  <div>
+                    <h3 class="card-title" style="font-size:1.05rem;">Gazetted Public Holidays Directory</h3>
+                    <p class="card-subtitle" style="font-size:0.75rem;">Legally gazetted public holidays recognized by the Addis Ababa City Administration.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-container" style="max-height: 480px; overflow-y: auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Gregorian</th>
+                      <th>የኢትዮጵያ ቀን</th>
+                      <th>Holiday Name (የበዓሉ ስም)</th>
+                      <th>Type</th>
+                      <th>Legal Source</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="officialHolidaysTableBody">
+                    <!-- Injected dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -829,7 +976,12 @@
           </div>
           <div class="form-group">
             <label>Hearing Date (Must be Wednesday or Friday) *</label>
-            <input type="date" id="modalHearingDate" class="form-input" required>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <input type="date" id="modalHearingDate" class="form-input" required style="flex:1;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="CivicCalendar.openEthiopianDatePicker(document.getElementById('modalHearingDate'), { hearingOnly: true })" title="Pick Ethiopian Hearing Date (Wed/Fri only)">
+                📅 13-ወር መቁጠሪያ
+              </button>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1517,9 +1669,102 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL: CALENDAR & NUMERAL PREFERENCES                                     -->
+  <!-- ========================================================================= -->
+  <div id="calendarSettingsModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('calendarSettingsModal')">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.4rem;">📅</span>
+          <div>
+            <h3 class="modal-title">Calendar & Numeral Preferences</h3>
+            <p class="modal-subtitle">የቀን መቁጠሪያና የግዕዝ ቁጥሮች ማስተካከያ</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('calendarSettingsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label style="font-weight:600; margin-bottom:0.4rem; display:block;">Primary Calendar System (የቀን መቁጠሪያ ስርዓት)</label>
+          <select id="calDisplayModeSelect" class="form-input">
+            <option value="auto">Language-Bound (አማርኛ -> Ethiopian, English -> Dual Gregorian/Ethiopian)</option>
+            <option value="ethiopian">Always Ethiopian (13 ወራት የኢትዮጵያ ዘመን አቆጣጠር)</option>
+            <option value="gregorian">Always Gregorian (የፈረንጆች አቆጣጠር)</option>
+          </select>
+          <small style="color:var(--text-secondary); display:block; margin-top:0.35rem;">
+            Controls civic date rendering across tickets, audit log, and SLA badges.
+          </small>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer;">
+            <input type="checkbox" id="calGeezNumeralsCheckbox" style="width:1.15rem; height:1.15rem;">
+            <span style="font-weight:600;">Enable Ge'ez Numerals (የግዕዝ ቁጥሮች ፩ ፪ ፫...)</span>
+          </label>
+          <small style="color:var(--text-secondary); display:block; margin-left:1.75rem; margin-top:0.25rem;">
+            Applies traditional Ge'ez numerical representation to Ethiopian calendar days and years.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('calendarSettingsModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveCalendarSettings()">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: SUPER ADMIN PUBLIC HOLIDAY MANAGEMENT                              -->
+  <!-- ========================================================================= -->
+  <div id="holidayAdminModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('holidayAdminModal')">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="holidayModalTitle">Add Public Holiday (የህዝብ በዓል መዝግብ)</h3>
+        <button class="modal-close" onclick="closeModal('holidayAdminModal')">&times;</button>
+      </div>
+      <form onsubmit="CivicCalendar.handleHolidayAdminSubmit(event)">
+        <input type="hidden" id="holidayEditId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Gregorian Date (YYYY-MM-DD) *</label>
+            <input type="date" id="holidayDateInput" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Holiday Name (English) *</label>
+              <input type="text" id="holidayNameEnInput" class="form-input" required placeholder="e.g. Enkutatash (Ethiopian New Year)">
+            </div>
+            <div class="form-group">
+              <label>Holiday Name (አማርኛ) *</label>
+              <input type="text" id="holidayNameAmInput" class="form-input" required placeholder="e.g. እንቁጣጣሽ (የዘመን መለወጫ)">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Holiday Classification Type *</label>
+            <select id="holidayTypeSelect" class="form-input" required>
+              <option value="FIXED">FIXED (ቋሚ የመንግስት በዓል)</option>
+              <option value="MOVABLE">MOVABLE (ተንቀሳቃሽ የክርስቲያን በዓል - ፋሲካ/ስቅለት)</option>
+              <option value="ISLAMIC">ISLAMIC (የጨረቃ እይታ የእስልምና በዓል - ዒድ)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Legal Gazetted Source / Proclamation Reference</label>
+            <input type="text" id="holidaySourceInput" class="form-input" placeholder="e.g. Federal Public Holidays Proclamation No. 16/1975">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('holidayAdminModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Public Holiday</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <script src="/static/js/calendar.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

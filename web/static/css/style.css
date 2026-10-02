@@ -3855,4 +3855,510 @@ body::after {
   }
 }
 
+/* ==============================================================================
+   PHASE 2: ETHIOPIAN CALENDAR, 13-MONTH DATE PICKER & WORKING-DAY BADGES
+   ============================================================================== */
+
+/* 1. Working Days Remaining Badge */
+.sla-work-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: help;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sla-work-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.sla-work-badge.badge-green {
+  background: rgba(30, 107, 55, 0.12);
+  border: 1px solid rgba(30, 107, 55, 0.35);
+  color: #15803d;
+}
+
+.sla-work-badge.badge-amber {
+  background: rgba(180, 83, 9, 0.12);
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  color: #b45309;
+}
+
+.sla-work-badge.badge-red {
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #dc2626;
+  animation: badge-pulse-subtle 2.5s infinite;
+}
+
+.sla-work-badge.badge-resolved {
+  background: rgba(71, 85, 105, 0.1);
+  border: 1px solid rgba(71, 85, 105, 0.25);
+  color: #475569;
+}
+
+@keyframes badge-pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* 2. 13-Month Ethiopian Date Picker Modal */
+.eth-datepicker-dialog {
+  max-width: 620px;
+  width: 95%;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--border-glass-bright);
+  overflow: hidden;
+}
+
+.eth-datepicker-header {
+  background: linear-gradient(135deg, #0F2D59 0%, #1B365D 100%);
+  color: #FFFFFF;
+  padding: 1.15rem 1.5rem;
+}
+
+.eth-datepicker-header .modal-title {
+  color: #FFFFFF;
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.eth-datepicker-header .modal-subtitle {
+  color: #93C5FD;
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.eth-datepicker-header .modal-close {
+  color: #FFFFFF;
+}
+
+.eth-datepicker-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.eth-picker-controls {
+  margin-bottom: 1rem;
+}
+
+.eth-year-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.eth-year-display {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #0F2D59;
+}
+
+/* 13-Month Horizontal Selector Strip */
+.eth-months-strip {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.eth-month-pill {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eth-month-pill:hover {
+  background: #F8FAFC;
+  border-color: #0F2D59;
+  color: #0F2D59;
+}
+
+.eth-month-pill.active {
+  background: #0F2D59;
+  border-color: #0F2D59;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 45, 89, 0.25);
+}
+
+.eth-month-pill small {
+  font-size: 0.65rem;
+  opacity: 0.85;
+}
+
+.eth-month-pill.pagume-pill {
+  border-color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+  font-weight: 700;
+}
+
+.eth-month-pill.pagume-pill.active {
+  background: #D97706;
+  border-color: #D97706;
+  color: #FFFFFF;
+}
+
+/* Weekday Columns Header */
+.eth-grid-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 0.5rem;
+}
+
+.hearing-col-header {
+  color: #0F2D59;
+  background: rgba(15, 45, 89, 0.06);
+  border-radius: 4px;
+}
+
+.weekend-col-header {
+  color: #94A3B8;
+}
+
+/* Days Grid */
+.eth-grid-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.eth-day-cell {
+  position: relative;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eth-day-cell.empty-pad {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.eth-day-cell:hover:not(:disabled):not(.empty-pad) {
+  border-color: #0F2D59;
+  background: #F1F5F9;
+  transform: translateY(-1px);
+}
+
+.eth-day-cell .day-number {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.eth-day-cell .day-greg-sub {
+  font-size: 0.62rem;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* States */
+.eth-day-cell.weekend-day {
+  background: #F8FAFC;
+  color: #94A3B8;
+}
+
+.eth-day-cell.holiday-day {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #F59E0B;
+  color: #B45309;
+}
+
+.eth-day-cell.hearing-day {
+  background: rgba(15, 45, 89, 0.08);
+  border-color: #0F2D59;
+  color: #0F2D59;
+  font-weight: 800;
+}
+
+.eth-day-cell.selected-day {
+  background: #0F2D59 !important;
+  color: #FFFFFF !important;
+  border-color: #0F2D59 !important;
+  box-shadow: 0 4px 10px rgba(15, 45, 89, 0.3);
+}
+
+.eth-day-cell.selected-day .day-greg-sub {
+  color: #93C5FD !important;
+}
+
+.eth-day-cell.disabled-hearing {
+  opacity: 0.35;
+  background: #F1F5F9;
+  color: #CBD5E1;
+  cursor: not-allowed;
+}
+
+.cell-holiday-tag {
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.58rem;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #B45309;
+  font-weight: 700;
+}
+
+.cell-hearing-tag {
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.58rem;
+  color: #0F2D59;
+  font-weight: 700;
+}
+
+.eth-selected-preview {
+  margin-top: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.eth-datepicker-footer {
+  padding: 0.85rem 1.5rem;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.legend-dot.holiday-dot { background: #F59E0B; }
+.legend-dot.hearing-dot { background: #0F2D59; }
+
+/* 3. Official Calendar Page View Styles */
+.civic-calendar-page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.civic-cal-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+}
+
+.civic-cal-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.civic-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 0.5rem;
+}
+
+.civic-cal-cell {
+  min-height: 85px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+}
+
+.civic-cal-cell:hover:not(.empty-pad) {
+  border-color: #94A3B8;
+  box-shadow: var(--shadow-sm);
+}
+
+.civic-cal-cell.weekend-cell {
+  background: #F8FAFC;
+}
+
+.civic-cal-cell.holiday-cell {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.civic-cal-cell.hearing-cell {
+  border-left: 3px solid #0F2D59;
+}
+
+.cell-date-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.eth-day-bold {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #0F172A;
+}
+
+.greg-day-mute {
+  font-size: 0.7rem;
+  color: #94A3B8;
+}
+
+.cell-events-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.cell-event-badge {
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.cell-event-badge.holiday-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #B45309;
+  font-weight: 700;
+}
+
+.cell-event-badge.hearing-badge {
+  background: rgba(15, 45, 89, 0.1);
+  color: #0F2D59;
+  font-weight: 600;
+}
+
+/* Working Days Calculator Tool Card */
+.calc-results-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.calc-hero-metric {
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 1rem;
+}
+
+.calc-num {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #0F2D59;
+  line-height: 1;
+}
+
+.calc-unit {
+  display: block;
+  font-size: 0.88rem;
+  color: #475569;
+  font-weight: 700;
+  margin-top: 0.35rem;
+}
+
+.calc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.calc-stat-item {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calc-stat-label {
+  font-size: 0.7rem;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.holiday-type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.holiday-type-badge.type-FIXED { background: #E0E7FF; color: #3730A3; }
+.holiday-type-badge.type-MOVABLE { background: #FEF3C7; color: #92400E; }
+.holiday-type-badge.type-ISLAMIC { background: #D1FAE5; color: #065F46; }
+
+.eth-date-tag {
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #0F2D59;
+}
+
 

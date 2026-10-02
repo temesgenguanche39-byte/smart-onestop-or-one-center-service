@@ -48,6 +48,7 @@ func main() {
 	hearingRepo := repository.NewGormHearingRepository(db)
 	auditRepo := repository.NewGormAuditRepository(db)
 	serviceTypeRepo := repository.NewGormServiceTypeRepository(db)
+	holidayRepo := repository.NewGormHolidayRepository(db)
 
 	// 5. Initialize Security & Redis
 	jwtManager := security.NewJWTManager(cfg.JWTSecret, cfg.JWTExpiration)
@@ -68,6 +69,9 @@ func main() {
 	)
 	analyticsService := service.NewAnalyticsService(
 		caseRepo, structureRepo, auditRepo,
+	)
+	calendarService := service.NewCalendarService(
+		holidayRepo, auditRepo,
 	)
 
 	// 7. Start In-Process SLA Escalation Engine (Robfig Cron / Every 60s)
@@ -106,6 +110,7 @@ func main() {
 	hearingHandler := handler.NewHearingHandler(hearingService, hearingRepo)
 	structureHandler := handler.NewStructureHandler(structureRepo, serviceTypeRepo)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService, slaService)
+	calendarHandler := handler.NewCalendarHandler(calendarService)
 
 	router := presentation.SetupRouter(&presentation.RouterConfig{
 		Cfg:              cfg,
@@ -115,6 +120,7 @@ func main() {
 		HearingHandler:   hearingHandler,
 		StructureHandler: structureHandler,
 		AnalyticsHandler: analyticsHandler,
+		CalendarHandler:  calendarHandler,
 	})
 
 	// 9. Graceful HTTP Server Execution

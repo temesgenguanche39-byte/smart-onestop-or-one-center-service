@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/smart-onestop/platform/internal/application/dto"
 	"github.com/smart-onestop/platform/internal/application/service"
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/domain/workcalendar"
 	"github.com/smart-onestop/platform/internal/presentation/middleware"
 )
 
@@ -42,6 +44,16 @@ func (h *HearingHandler) ScheduleSlot(c *gin.Context) {
 	officialID := middleware.GetCurrentUserID(c)
 	resp, err := h.hearingService.ScheduleSlot(c.Request.Context(), caseID, officialID, req)
 	if err != nil {
+		var holErr *service.HearingHolidayError
+		if errors.As(err, &holErr) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":                         holErr.Error(),
+				"holiday_date":                  holErr.Date.Format("2006-01-02"),
+				"suggested_next_slot":           holErr.SuggestedSlot.Format("2006-01-02"),
+				"suggested_next_slot_ethiopian": workcalendar.FormatEthiopian(workcalendar.ToEthiopianDate(holErr.SuggestedSlot), "am"),
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

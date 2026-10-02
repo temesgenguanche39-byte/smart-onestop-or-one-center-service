@@ -9,7 +9,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/smart-onestop/platform/internal/application/dto"
 	"github.com/smart-onestop/platform/internal/domain"
+	"github.com/smart-onestop/platform/internal/domain/workcalendar"
 )
+
+// HearingHolidayError is returned when a hearing date falls on a public holiday
+type HearingHolidayError struct {
+	Date          time.Time
+	SuggestedSlot time.Time
+}
+
+func (e *HearingHolidayError) Error() string {
+	return fmt.Sprintf("hearing date %s is a public holiday; suggested next slot: %s",
+		e.Date.Format("2006-01-02"), e.SuggestedSlot.Format("2006-01-02"))
+}
 
 type HearingService struct {
 	hearingRepo domain.HearingRepository
@@ -58,6 +70,15 @@ func (s *HearingService) ScheduleSlot(
 	weekday := parsedDate.Weekday()
 	if weekday != time.Wednesday && weekday != time.Friday {
 		return nil, domain.ErrNotWednesdayOrFriday
+	}
+
+	// Constraint: Must be a working day (reject public holidays)
+	if !workcalendar.IsWorkingDay(parsedDate, "") {
+		nextSlot := workcalendar.NextHearingDay(parsedDate)
+		return nil, &HearingHolidayError{
+			Date:          parsedDate,
+			SuggestedSlot: nextSlot,
+		}
 	}
 
 	// 3. Check for conflicting bookings for this official
