@@ -1,60 +1,104 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart One-Stop Municipal Civic Platform | የ አንድ ማዕከል አገልግሎት</title>
+  <title>City Grievance & Public Service Resolution Portal | የአዲስ አበባ ከተማ አስተዳደር</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
   <!-- QR Code generation library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
-<body class="theme-dark">
+<body class="theme-light">
 
-  <!-- TOP APP BAR / FLOATING GLASS NAVBAR -->
-  <header class="navbar">
-    <div class="nav-container">
-      <div class="nav-brand">
-        <div class="brand-crest">
-          <span class="crest-icon">🏛️</span>
-          <span class="crest-glow"></span>
-        </div>
-        <div class="brand-text">
-          <div class="brand-title">Smart One-Stop Municipal Platform</div>
-          <div class="brand-subtitle amharic-text">የ አንድ ማዕከል አገልግሎት እና አውቶማቲክ ቅሬታ መፍቻ</div>
-        </div>
+  <!-- ========================================================================= -->
+  <!-- 1. OFFICIAL CITIZEN BANNER (TOP MASTHEAD)                                 -->
+  <!-- ========================================================================= -->
+  <div class="gov-masthead" id="govMasthead">
+    <div class="gov-masthead-container">
+      <div class="gov-masthead-left">
+        <!-- National Flag of Ethiopia SVG -->
+        <svg class="gov-flag-svg" viewBox="0 0 48 32" width="22" height="15" aria-hidden="true" title="Federal Democratic Republic of Ethiopia">
+          <rect width="48" height="10.67" fill="#078930"/>
+          <rect y="10.67" width="48" height="10.67" fill="#FCDD09"/>
+          <rect y="21.33" width="48" height="10.67" fill="#DA121A"/>
+          <circle cx="24" cy="16" r="6.8" fill="#0F47AF"/>
+          <polygon points="24,10.2 25.7,14.3 29.8,13.6 26.4,16 28.3,19.9 24,17.5 19.7,19.9 21.6,16 18.2,13.6 22.3,14.3" fill="#FCDD09"/>
+        </svg>
+        <span class="gov-masthead-title" data-i18n="govMastheadTitle">
+          An official website of the Addis Ababa City Administration • Official Public Service Portal
+        </span>
+        <button type="button" class="gov-official-link" onclick="openOfficialInfoModal()">
+          <span data-i18n="howYouKnowOfficial">How you know it's official</span> <span class="chevron-down">▾</span>
+        </button>
       </div>
 
-      <!-- Live Municipal Grid Status Badge (Click to Configure Gateway / Vercel Bridge) -->
-      <div class="system-status-chip online" id="systemStatusChip" onclick="openGatewayModal()" style="cursor: pointer;" title="Municipal Gateway Connectivity (Vercel & Docker Bridge)">
-        <span class="pulse-dot" id="statusPulseDot"></span>
-        <span class="status-chip-text" id="systemStatusText" data-i18n="systemOnline">Addis Ababa Municipal Cloud • Active</span>
+      <div class="gov-masthead-right">
+        <!-- Accessibility Font Size Adjusters -->
+        <div class="gov-a11y-controls" title="Text Size Adjuster">
+          <span class="a11y-label">Text:</span>
+          <button type="button" class="a11y-btn" onclick="adjustFontSize(-1)" title="Decrease font size">A-</button>
+          <button type="button" class="a11y-btn" onclick="adjustFontSize(0)" title="Reset font size">A</button>
+          <button type="button" class="a11y-btn" onclick="adjustFontSize(1)" title="Increase font size">A+</button>
+        </div>
+
+        <!-- High Contrast Mode Toggle -->
+        <button type="button" id="contrastToggleBtn" class="gov-contrast-btn" onclick="toggleHighContrast()" title="Toggle WCAG 2.1 AAA High Contrast">
+          <span class="contrast-icon">◐</span>
+          <span data-i18n="highContrast">Contrast</span>
+        </button>
+
+        <span class="gov-masthead-sep">|</span>
+
+        <!-- Bilingual Language Switcher -->
+        <div class="gov-lang-switch">
+          <button id="langAmBtn" class="gov-lang-btn amharic-text" onclick="setLanguage('am')">አማርኛ</button>
+          <span class="gov-lang-sep">|</span>
+          <button id="langEnBtn" class="gov-lang-btn active" onclick="setLanguage('en')">English</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN TOP NAVIGATION                                                    -->
+  <!-- ========================================================================= -->
+  <header class="navbar civic-gov-nav">
+    <div class="nav-container">
+      <div class="nav-brand" onclick="showCitizenTab('intake')" style="cursor: pointer;" title="Smart Municipal Service Center">
+        <div class="brand-crest-box">
+          <span class="crest-icon">🏛️</span>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title" data-i18n="platformBrandTitle">Smart Municipal Service Center</h1>
+          <p class="brand-subtitle amharic-text" data-i18n="platformBrandSubtitle">የአዲስ አበባ ከተማ አስተዳደር የቅሬታ ማቅረቢያ መድረክ</p>
+        </div>
       </div>
 
       <div class="nav-actions">
-        <!-- Bilingual Language Switcher -->
-        <div class="lang-switch">
-          <button id="langEnBtn" class="lang-btn active" onclick="setLanguage('en')">EN</button>
-          <button id="langAmBtn" class="lang-btn amharic-text" onclick="setLanguage('am')">አማ</button>
-        </div>
-
-        <!-- Modern Theme Switcher (Dark / Light) -->
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark / Light Mode">
-          <span id="themeToggleIcon" class="theme-icon">☀️</span>
-          <span id="themeToggleLabel" class="theme-label" data-i18n="themeLight">Light</span>
+        <!-- Public Citizen Track Action -->
+        <button id="navTrackBtn" class="nav-action-btn nav-btn-outline" onclick="showCitizenTab('track')">
+          <span class="nav-action-icon">🔎</span>
+          <span data-i18n="trackExistingTicket">Track Existing Ticket</span>
         </button>
 
-        <!-- Active Official Session Pill (Hidden by default) -->
+        <!-- Officer Sign In CTA -->
+        <button id="navOfficerSignInBtn" class="nav-action-btn nav-btn-navy" onclick="switchPortal('official')">
+          <span class="nav-action-icon">⚖️</span>
+          <span data-i18n="officerSignIn">Officer Sign In</span>
+        </button>
+
+        <!-- Active Official Session Pill (Shown only when signed in as an Officer) -->
         <div id="navSessionBadge" class="nav-user-badge hidden">
           <span id="navSessionAvatar">⚖️</span>
           <span id="navSessionName">Official</span>
-          <button type="button" class="btn-text-sm" onclick="logoutOfficial()" title="Sign Out" style="margin-left:4px; font-size:0.75rem; color:inherit;">✕</button>
+          <button type="button" class="btn-text-sm" onclick="logoutOfficial()" title="Sign Out" style="margin-left:6px; font-size:0.75rem; color:inherit; background:transparent; border:none; cursor:pointer;">✕</button>
         </div>
 
-        <!-- Mode Toggle: Citizen vs Official -->
-        <div class="mode-selector">
+        <!-- Mode Toggle (Hidden in citizen view; toggled via Officer Sign In) -->
+        <div class="mode-selector" style="display:none;">
           <button id="modeCitizenBtn" class="mode-btn active" onclick="switchPortal('citizen')">
             <span class="btn-icon">👤</span>
             <span data-i18n="citizenPortal">Citizen Portal</span>
@@ -75,58 +119,48 @@
     <!-- CITIZEN PORTAL SECTION                                                    -->
     <!-- ========================================================================= -->
     <section id="citizenSection" class="portal-section active">
-      <!-- Modern Civic Hero Banner -->
-      <div class="hero-card">
-        <div class="hero-content">
-          <div class="badge-pill">
-            <span class="pulse-dot"></span>
-            <span data-i18n="activeServiceStatus">Municipal Digital Gateway • Addis Ababa</span>
-          </div>
-          <h1 class="hero-title" data-i18n="heroTitle">Transparent Public Service & Automated SLA Resolution</h1>
-          <p class="hero-desc" data-i18n="heroDesc">
-            Eliminate in-person bureaucracy. Submit grievances directly to Woreda officers, track deterministic SLA timers, and participate in Wednesday & Friday virtual hearings.
-          </p>
+      <!-- 3. HERO & CIVIC INFORMATION ARCHITECTURE -->
+      <div class="hero-civic-card">
+        <div class="hero-civic-badge">
+          <span class="civic-badge-dot"></span>
+          <span data-i18n="activeServiceStatus">Addis Ababa City Administration • Official Public Service Portal</span>
+        </div>
+        <h1 class="hero-civic-title" data-i18n="heroTitle">City Grievance & Public Service Resolution Portal</h1>
+        <p class="hero-civic-desc" data-i18n="heroDesc">
+          Submit municipal issues directly to your Sub-City or Woreda administration. Track your case progress with transparent, binding resolution timelines.
+        </p>
 
-          <div class="hero-cta-group">
-            <button class="btn btn-primary btn-glow" onclick="showCitizenTab('intake')">
-              <span class="btn-icon">📝</span>
-              <span data-i18n="submitGrievance">Submit Grievance</span>
-            </button>
-            <button class="btn btn-secondary" onclick="showCitizenTab('track')">
-              <span class="btn-icon">🔍</span>
-              <span data-i18n="trackTicket">Track Ticket & QR</span>
-            </button>
-          </div>
+        <div class="hero-cta-group">
+          <button class="btn btn-civic-primary" onclick="showCitizenTab('intake')">
+            <span class="btn-icon">📝</span>
+            <span data-i18n="submitGrievance">File Official Grievance</span>
+          </button>
+          <button class="btn btn-civic-outline" onclick="showCitizenTab('track')">
+            <span class="btn-icon">🔍</span>
+            <span data-i18n="trackTicket">Track Case Status</span>
+          </button>
         </div>
 
-        <div class="hero-stats-panel">
-          <div class="stat-mini-card">
-            <div class="stat-mini-icon stat-blue">📂</div>
-            <div class="stat-mini-body">
-              <div class="stat-num" id="heroActiveCases">3</div>
-              <div class="stat-label" data-i18n="activeCasesCount">Active Grievances</div>
-            </div>
+        <!-- Single Structured Public Service Transparency Strip (Replacing 4 disconnected boxes) -->
+        <div class="civic-transparency-strip">
+          <div class="transparency-item">
+            <div class="transparency-metric" id="stripResolutionRate">98.4%</div>
+            <div class="transparency-label" data-i18n="stripResolutionRateLabel">Resolution Rate</div>
           </div>
-          <div class="stat-mini-card stat-alert">
-            <div class="stat-mini-icon stat-red">⚡</div>
-            <div class="stat-mini-body">
-              <div class="stat-num text-red" id="heroBreachedCases">1</div>
-              <div class="stat-label" data-i18n="breachedCount">Auto-Escalating</div>
-            </div>
+          <div class="transparency-divider"></div>
+          <div class="transparency-item">
+            <div class="transparency-metric" id="stripAvgResponse">3.2 Days</div>
+            <div class="transparency-label" data-i18n="stripAvgResponseLabel">Avg. Response Time</div>
           </div>
-          <div class="stat-mini-card">
-            <div class="stat-mini-icon stat-purple">⚖️</div>
-            <div class="stat-mini-body">
-              <div class="stat-num">Wed / Fri</div>
-              <div class="stat-label" data-i18n="hearingDays">Digital Hearing Days</div>
-            </div>
+          <div class="transparency-divider"></div>
+          <div class="transparency-item">
+            <div class="transparency-metric" data-i18n="stripHearingsValue">Wed & Fri</div>
+            <div class="transparency-label" data-i18n="stripHearingsLabel">Virtual Dispute Hearings</div>
           </div>
-          <div class="stat-mini-card">
-            <div class="stat-mini-icon stat-green">🛡️</div>
-            <div class="stat-mini-body">
-              <div class="stat-num text-green">100%</div>
-              <div class="stat-label">Deterministic SLA</div>
-            </div>
+          <div class="transparency-divider"></div>
+          <div class="transparency-item">
+            <div class="transparency-metric metric-accent" data-i18n="stripSlaValue">Legally Binding</div>
+            <div class="transparency-label" data-i18n="stripSlaLabel">Deterministic SLA Guarantee</div>
           </div>
         </div>
       </div>
@@ -143,50 +177,59 @@
         </button>
       </div>
 
-      <!-- TAB 1: CITIZEN INTAKE FORM (MODERN 3-STEP WIZARD) -->
+      <!-- TAB 1: CITIZEN INTAKE FORM (OFFICIAL 3-STEP WIZARD) -->
       <div id="citizenIntakeTab" class="tab-content active">
         <div class="card form-card">
           <div class="card-header">
-            <div class="card-header-icon">📋</div>
+            <div class="brand-crest-box" style="width:42px; height:42px; font-size:1.2rem;">📋</div>
             <div class="card-header-text">
               <h2 class="card-title" data-i18n="intakeFormTitle">Citizen Grievance Submission</h2>
-              <p class="card-subtitle" data-i18n="intakeFormSubtitle">Complete the form below to receive your cryptographic ticket and SLA countdown.</p>
+              <p class="card-subtitle" data-i18n="intakeFormSubtitle">Complete the form below to receive your cryptographic ticket and binding SLA countdown.</p>
             </div>
           </div>
 
-          <!-- Multi-Step Guided Stepper Bar -->
-          <div class="form-stepper-bar">
-            <div id="formStepIndicator1" class="step-indicator-item active" onclick="setFormStep(1)">
-              <div class="step-num">1</div>
-              <div class="step-text">
-                <span class="step-sub">Phase 1</span>
-                <span class="step-main" data-i18n="step1Title">Citizen Profile</span>
+          <!-- 4. PROGRESS STEPPER (Clean Horizontal Process Bar with Semantic Stages & Checkmarks) -->
+          <div class="civic-stepper-bar">
+            <div id="formStepIndicator1" class="civic-step-item active" onclick="setFormStep(1)">
+              <div class="civic-step-badge">
+                <span class="civic-step-num">1</span>
+                <span class="civic-step-check">✓</span>
+              </div>
+              <div class="civic-step-details">
+                <span class="civic-step-stage" data-i18n="stepStage1">Stage 1</span>
+                <span class="civic-step-title" data-i18n="step1Title">Citizen Details</span>
               </div>
             </div>
-            <div class="step-connector"></div>
-            <div id="formStepIndicator2" class="step-indicator-item" onclick="setFormStep(2)">
-              <div class="step-num">2</div>
-              <div class="step-text">
-                <span class="step-sub">Phase 2</span>
-                <span class="step-main" data-i18n="step2Title">Jurisdiction & SLA</span>
+            <div class="civic-step-connector"></div>
+            <div id="formStepIndicator2" class="civic-step-item" onclick="setFormStep(2)">
+              <div class="civic-step-badge">
+                <span class="civic-step-num">2</span>
+                <span class="civic-step-check">✓</span>
+              </div>
+              <div class="civic-step-details">
+                <span class="civic-step-stage" data-i18n="stepStage2">Stage 2</span>
+                <span class="civic-step-title" data-i18n="step2Title">Jurisdiction & Issue</span>
               </div>
             </div>
-            <div class="step-connector"></div>
-            <div id="formStepIndicator3" class="step-indicator-item" onclick="setFormStep(3)">
-              <div class="step-num">3</div>
-              <div class="step-text">
-                <span class="step-sub">Phase 3</span>
-                <span class="step-main" data-i18n="step3Title">Grievance & Proof</span>
+            <div class="civic-step-connector"></div>
+            <div id="formStepIndicator3" class="civic-step-item" onclick="setFormStep(3)">
+              <div class="civic-step-badge">
+                <span class="civic-step-num">3</span>
+                <span class="civic-step-check">✓</span>
+              </div>
+              <div class="civic-step-details">
+                <span class="civic-step-stage" data-i18n="stepStage3">Stage 3</span>
+                <span class="civic-step-title" data-i18n="step3Title">Evidence & Submission</span>
               </div>
             </div>
           </div>
 
           <form id="grievanceForm" onsubmit="handleGrievanceSubmit(event)">
             
-            <!-- STEP 1: CITIZEN PROFILE -->
+            <!-- STEP 1: CITIZEN DETAILS -->
             <div id="formStepSection1" class="form-step-section active">
               <div class="step-section-heading">
-                <span class="step-badge">Phase 1 of 3</span>
+                <span class="step-badge">Stage 1 of 3</span>
                 <h3>Applicant Personal Identification & Verified SMS Contact</h3>
               </div>
               <div class="form-grid">
@@ -206,11 +249,16 @@
                   </div>
                 </div>
 
+                <!-- National ID (Fayda / Kebele) with Instant Validation Formatting -->
                 <div class="form-group">
                   <label data-i18n="nationalId">National ID (Fayda / Kebele)</label>
                   <div class="input-icon-wrap">
                     <span class="input-icon">🪪</span>
-                    <input type="text" id="citizenNationalId" class="form-input" placeholder="ETH-NAT-XXXXXX">
+                    <input type="text" id="citizenNationalId" class="form-input" placeholder="FAN-1234-5678-9012" maxlength="19" oninput="formatFaydaNationalId(event)">
+                    <span id="faydaValidCheck" class="input-valid-indicator hidden">✓</span>
+                  </div>
+                  <div class="form-field-hint" data-i18n="nationalIdHint">
+                    Format: FAN-XXXX-XXXX-XXXX (16 digits Fayda National ID or Kebele Registration)
                   </div>
                 </div>
 
@@ -227,7 +275,7 @@
             <!-- STEP 2: JURISDICTION & CLASSIFICATION -->
             <div id="formStepSection2" class="form-step-section">
               <div class="step-section-heading">
-                <span class="step-badge">Phase 2 of 3</span>
+                <span class="step-badge">Stage 2 of 3</span>
                 <h3>Municipal Tier Jurisdiction & Target SLA Allocation</h3>
               </div>
               <div class="form-grid">
@@ -270,10 +318,10 @@
               </div>
             </div>
 
-            <!-- STEP 3: GRIEVANCE DOSSIER & EVIDENCE -->
+            <!-- STEP 3: EVIDENCE & SUBMISSION -->
             <div id="formStepSection3" class="form-step-section">
               <div class="step-section-heading">
-                <span class="step-badge">Phase 3 of 3</span>
+                <span class="step-badge">Stage 3 of 3</span>
                 <h3>Grievance Dossier & Cryptographic Proof Verification</h3>
               </div>
               <div class="form-grid">
@@ -287,35 +335,69 @@
                   <textarea id="grievanceDescription" class="form-textarea" rows="4" required placeholder="Explain clearly the administrative delay, previous visits, official names, and requested remedy..."></textarea>
                 </div>
 
-                <!-- Supporting Evidence Upload -->
+                <!-- 5. DOCUMENT INTAKE (Modern Drag-and-Drop Zone with Spec Chips & Virus Scanning) -->
                 <div class="form-group span-2">
                   <label data-i18n="evidenceUpload">Supporting Evidence (Contracts, Denials, Audio Note)</label>
-                  <div class="upload-dropzone">
-                    <span class="upload-icon">📎</span>
-                    <div class="upload-text">
-                      <strong>Click to attach file</strong> or drag documents here
-                      <div class="upload-hint">Supported: PDF, JPG, PNG, MP3 (Simulated OCR & Speech-to-Text)</div>
-                    </div>
-                    <input type="file" id="evidenceFileInput" class="file-input-hidden" onchange="handleFileSelect(event)">
-                  </div>
-                  <div id="selectedFilesList" class="file-tags-list"></div>
-
-                  <!-- Citizen Voice Note Studio -->
-                  <div class="voice-memo-studio">
-                    <div class="voice-studio-header">
-                      <span class="voice-icon">🎙️</span>
-                      <div>
-                        <div class="voice-title" data-i18n="voiceStudioTitle">Citizen Voice Memo Recording (የድምጽ መልእክት መቅረጫ)</div>
-                        <div class="voice-subtitle" data-i18n="voiceStudioDesc">Explain your grievance verbally in Amharic or English. Transcribed automatically into OCR text.</div>
+                  <div class="civic-dropzone-wrapper">
+                    <div class="civic-dropzone" id="civicDropzone" onclick="document.getElementById('evidenceFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDropFile(event)">
+                      <div class="dropzone-icon-box">
+                        <span class="dropzone-icon">📁</span>
                       </div>
+                      <div class="dropzone-content">
+                        <span class="dropzone-prompt-main" data-i18n="dropzonePrompt">Click to attach official documents</span>
+                        <span class="dropzone-prompt-sub" data-i18n="dropzoneSub">or drag and drop files directly into this area</span>
+                      </div>
+                      <div class="file-spec-chips">
+                        <span class="spec-chip">PDF</span>
+                        <span class="spec-chip">JPEG</span>
+                        <span class="spec-chip">PNG</span>
+                        <span class="spec-chip">MP3</span>
+                        <span class="spec-chip chip-highlight">Max 25MB</span>
+                      </div>
+                      <input type="file" id="evidenceFileInput" class="file-input-hidden" multiple onchange="handleFileSelect(event)">
                     </div>
-                    <div class="voice-controls">
-                      <button type="button" id="recordVoiceBtn" class="btn btn-secondary btn-sm" onclick="toggleVoiceRecording()">
-                        <span id="recordVoiceIcon">🔴</span> <span id="recordVoiceText" data-i18n="startRecording">Record Voice Memo</span>
+
+                    <!-- Selected Files Preview Cards with Virus Scanning Status -->
+                    <div id="selectedFilesList" class="file-preview-grid"></div>
+                  </div>
+
+                  <!-- 5. CITIZEN VOICE MEMO (Accessible State with Wave Visualizer, Timer & Playback) -->
+                  <div class="civic-voice-studio">
+                    <div class="voice-studio-top">
+                      <div class="voice-badge">
+                        <span class="voice-mic-icon">🎙️</span>
+                        <span data-i18n="voiceStudioTitle">Citizen Voice Memo Recording (የድምጽ መልእክት መቅረጫ)</span>
+                      </div>
+                      <button type="button" id="recordVoiceBtn" class="btn-voice-record" onclick="toggleVoiceRecording()">
+                        <span id="recordVoiceIcon">🎙️</span>
+                        <span id="recordVoiceText" data-i18n="startRecording">Record Voice Memo</span>
                       </button>
-                      <div id="voiceWaveform" class="voice-waveform hidden">
-                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                        <span class="recording-timer" id="recordingTimer">00:00</span>
+                    </div>
+                    <div class="form-field-hint" style="margin-top:0.4rem;" data-i18n="voiceStudioDesc">
+                      Explain your grievance verbally in Amharic or English. Transcribed automatically into OCR text.
+                    </div>
+
+                    <!-- Live Recording Wave Visualizer -->
+                    <div id="voiceWaveform" class="voice-wave-container hidden">
+                      <div class="wave-visualizer">
+                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                        <span class="wave-bar"></span><span class="wave-bar"></span>
+                      </div>
+                      <span class="recording-timer" id="recordingTimer">00:00</span>
+                      <span style="font-size:0.8rem; color:#DC2626; font-weight:700;">Live Recording in Progress...</span>
+                    </div>
+
+                    <!-- Instant Playback Box -->
+                    <div id="voicePlaybackContainer" class="voice-playback-box hidden">
+                      <div class="playback-header">
+                        <span class="playback-title">🎙️ <span data-i18n="voiceMemoReady">Recorded Voice Memo Ready</span></span>
+                        <span class="file-scan-badge"><span class="scan-badge-icon">🛡️</span> <span data-i18n="audioEncrypted">Audio Encrypted & Sealed</span></span>
+                      </div>
+                      <audio id="citizenAudioPlayer" controls class="civic-audio-player"></audio>
+                      <div class="playback-actions">
+                        <button type="button" class="btn-text-sm" onclick="reRecordVoice()" style="color:var(--navy-primary); font-weight:700; background:transparent; border:none; cursor:pointer;">
+                          🔄 <span data-i18n="rerecordMemo">Re-record Voice Memo</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -325,16 +407,16 @@
 
             <!-- Stepper Actions Bar -->
             <div class="form-footer stepper-footer">
-              <button type="button" id="formPrevBtn" class="btn btn-secondary" onclick="prevFormStep()" style="display:none;">
+              <button type="button" id="formPrevBtn" class="btn btn-civic-outline" onclick="prevFormStep()" style="display:none;">
                 <span data-i18n="prevStep">← Previous Step</span>
               </button>
               <div class="stepper-right-actions">
-                <button type="button" id="formNextBtn" class="btn btn-primary" onclick="nextFormStep()">
+                <button type="button" id="formNextBtn" class="btn btn-civic-primary" onclick="nextFormStep()">
                   <span data-i18n="nextStep">Next Step →</span>
                 </button>
-                <button type="submit" id="submitGrievanceBtn" class="btn btn-primary btn-lg btn-glow" style="display:none;">
-                  <span class="btn-icon">🚀</span>
-                  <span data-i18n="submitGrievanceBtn">Submit Grievance & Generate Ticket</span>
+                <button type="submit" id="submitGrievanceBtn" class="btn-civic-submit" style="display:none;">
+                  <span class="btn-icon">🔒</span>
+                  <span data-i18n="submitGrievanceBtn">Submit Official Grievance</span>
                 </button>
               </div>
             </div>
@@ -1313,6 +1395,50 @@
           <button type="submit" class="btn btn-primary">Create & Issue Credentials</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: HOW YOU KNOW IT'S OFFICIAL                                         -->
+  <!-- ========================================================================= -->
+  <div id="officialVerifyModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeOfficialInfoModal()">
+    <div class="modal-dialog official-verify-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.4rem;">🏛️</span>
+          <div>
+            <h3 class="modal-title" data-i18n="officialVerifyModalTitle">How you know this site is official</h3>
+            <p class="modal-subtitle" data-i18n="officialVerifyModalSubtitle">Addis Ababa City Administration Civic Verification Standards</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeOfficialInfoModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="verify-feature-card">
+          <div class="verify-feature-icon">🌐</div>
+          <div>
+            <strong data-i18n="officialDomainTitle">Official Government Authority</strong>
+            <p data-i18n="officialDomainDesc">Official government websites end in .gov.et or represent authorized municipal portals operated by the Addis Ababa City Administration.</p>
+          </div>
+        </div>
+        <div class="verify-feature-card">
+          <div class="verify-feature-icon">🔒</div>
+          <div>
+            <strong data-i18n="officialSecureTitle">Cryptographic Security & Data Protection</strong>
+            <p data-i18n="officialSecureDesc">All citizen submissions are encrypted over HTTPS and bound with SHA-256 cryptographic seals, guaranteeing immutable tamper-proof evidence records.</p>
+          </div>
+        </div>
+        <div class="verify-feature-card">
+          <div class="verify-feature-icon">⚖️</div>
+          <div>
+            <strong data-i18n="officialSlaTitle">Legally Binding SLA Timelines</strong>
+            <p data-i18n="officialSlaDesc">Every grievance logged through this portal triggers automated escalation timelines enforced across Woreda, Sub-City, and City tiers under municipal law.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-civic-primary" onclick="closeOfficialInfoModal()" data-i18n="modalUnderstood">Understood</button>
+      </div>
     </div>
   </div>
 

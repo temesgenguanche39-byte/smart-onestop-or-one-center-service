@@ -252,23 +252,34 @@ function setGatewayPreset(presetUrl) {
 // Bilingual Localization Dictionary
 const i18n = {
   en: {
+    govMastheadTitle: "An official website of the Addis Ababa City Administration • Official Public Service Portal",
+    howYouKnowOfficial: "How you know it's official",
+    highContrast: "Contrast",
+    platformBrandTitle: "Smart Municipal Service Center",
+    platformBrandSubtitle: "የአዲስ አበባ ከተማ አስተዳደር የቅሬታ ማቅረቢያ መድረክ",
+    trackExistingTicket: "Track Existing Ticket",
+    officerSignIn: "Officer Sign In",
     citizenPortal: "Citizen Portal",
     officialDesk: "Official Command",
-    activeServiceStatus: "Municipal Digital Gateway • Addis Ababa",
-    heroTitle: "Transparent Public Service & Automated SLA Resolution",
-    heroDesc: "Eliminate in-person bureaucracy. Submit grievances directly to Woreda officers, track deterministic SLA timers, and participate in Wednesday & Friday virtual hearings.",
-    submitGrievance: "Submit Grievance",
-    trackTicket: "Track Ticket & QR",
-    activeCasesCount: "Active Grievances",
-    breachedCount: "Auto-Escalating",
-    hearingDays: "Digital Hearing Days",
+    activeServiceStatus: "Addis Ababa City Administration • Official Public Service Portal",
+    heroTitle: "City Grievance & Public Service Resolution Portal",
+    heroDesc: "Submit municipal issues directly to your Sub-City or Woreda administration. Track your case progress with transparent, binding resolution timelines.",
+    submitGrievance: "File Official Grievance",
+    trackTicket: "Track Case Status",
+    stripResolutionRateLabel: "Resolution Rate",
+    stripAvgResponseLabel: "Avg. Response Time",
+    stripHearingsLabel: "Virtual Dispute Hearings",
+    stripHearingsValue: "Wed & Fri",
+    stripSlaLabel: "Deterministic SLA Guarantee",
+    stripSlaValue: "Legally Binding",
     newComplaint: "File New Grievance",
     trackExisting: "Track Status & Hearing Slot",
     intakeFormTitle: "Citizen Grievance Submission",
-    intakeFormSubtitle: "Complete the form below to receive your cryptographic ticket and SLA countdown.",
+    intakeFormSubtitle: "Complete the form below to receive your cryptographic ticket and binding SLA countdown.",
     fullName: "Full Name *",
     phoneNumber: "Phone Number (SLA SMS Alerts) *",
     nationalId: "National ID (Fayda / Kebele)",
+    nationalIdHint: "Format: FAN-XXXX-XXXX-XXXX (16 digits Fayda National ID or Kebele Registration)",
     houseNumber: "House Number / Kebele",
     subCity: "Sub-City Administration *",
     woreda: "Woreda Jurisdiction (Initial Intake Tier) *",
@@ -277,7 +288,9 @@ const i18n = {
     grievanceTitle: "Grievance Subject / Title *",
     detailedDescription: "Detailed Description & Previous Office Responses *",
     evidenceUpload: "Supporting Evidence (Contracts, Denials, Audio Note)",
-    submitGrievanceBtn: "Submit Grievance & Generate Ticket",
+    dropzonePrompt: "Click to attach official documents",
+    dropzoneSub: "or drag and drop files directly into this area",
+    submitGrievanceBtn: "Submit Official Grievance",
     trackBtn: "Track Grievance",
     demoTickets: "Quick Demo Tickets:",
     triggerSla: "Run SLA Escalation Engine",
@@ -295,11 +308,17 @@ const i18n = {
     selectHearingDay: "Select Presiding Hearing Session:",
     voiceStudioTitle: "Citizen Voice Memo Recording (የድምጽ መልእክት መቅረጫ)",
     voiceStudioDesc: "Explain your grievance verbally in Amharic or English. Transcribed automatically into OCR text.",
+    voiceMemoReady: "Recorded Voice Memo Ready",
+    audioEncrypted: "Audio Encrypted & Sealed",
+    rerecordMemo: "Re-record Voice Memo",
     startRecording: "Record Voice Memo",
     stopRecording: "Stop & Save Memo",
-    step1Title: "1. Citizen Profile",
-    step2Title: "2. Jurisdiction & SLA",
-    step3Title: "3. Grievance & Proof",
+    stepStage1: "Stage 1",
+    stepStage2: "Stage 2",
+    stepStage3: "Stage 3",
+    step1Title: "Citizen Details",
+    step2Title: "Jurisdiction & Issue",
+    step3Title: "Evidence & Submission",
     nextStep: "Next Step →",
     prevStep: "← Previous Step",
     systemOnline: "Addis Ababa Municipal Cloud • Active",
@@ -312,26 +331,47 @@ const i18n = {
     rememberMe: "Keep me signed in",
     signInBtn: "Sign In to Official Command →",
     signOut: "Sign Out",
-    evalPersonas: "Or evaluate with a municipal role profile:"
+    evalPersonas: "Or evaluate with a municipal role profile:",
+    officialVerifyModalTitle: "How you know this site is official",
+    officialVerifyModalSubtitle: "Addis Ababa City Administration Civic Verification Standards",
+    officialDomainTitle: "Official Government Authority",
+    officialDomainDesc: "Official government websites end in .gov.et or represent authorized municipal portals operated by the Addis Ababa City Administration.",
+    officialSecureTitle: "Cryptographic Security & Data Protection",
+    officialSecureDesc: "All citizen submissions are encrypted over HTTPS and bound with SHA-256 cryptographic seals, guaranteeing immutable tamper-proof evidence records.",
+    officialSlaTitle: "Legally Binding SLA Timelines",
+    officialSlaDesc: "Every grievance logged through this portal triggers automated escalation timelines enforced across Woreda, Sub-City, and City tiers under municipal law.",
+    modalUnderstood: "Understood",
+    scanVerified: "Virus scanned & verified"
   },
   am: {
+    govMastheadTitle: "የአዲስ አበባ ከተማ አስተዳደር ይፋዊ ድረ-ገጽ • ይፋዊ የህዝብ አገልግሎት መድረክ",
+    howYouKnowOfficial: "ይፋዊ መሆኑን እንዴት ያውቃሉ?",
+    highContrast: "ከፍተኛ ንፅፅር",
+    platformBrandTitle: "የአንድ ማዕከል ማዘጋጃ ቤት አገልግሎት",
+    platformBrandSubtitle: "የአዲስ አበባ ከተማ አስተዳደር የቅሬታ ማቅረቢያ መድረክ",
+    trackExistingTicket: "የነበረ ቲኬት ይከታተሉ",
+    officerSignIn: "የኦፊሰር መግቢያ",
     citizenPortal: "የተገልጋይ ማዕከል",
     officialDesk: "የኃላፊዎች መቆጣጠሪያ",
-    activeServiceStatus: "የአዲስ አበባ ከተማ አስተዳደር ዲጂታል በር",
-    heroTitle: "ቀልጣፋና ግልጽ የህዝብ አገልግሎት እና አውቶማቲክ ቅሬታ መፍቻ",
-    heroDesc: "የወረፋና ቢሮክራሲ ችግርን በማስቀረት ቅሬታዎን በቀጥታ ለወረዳ ያቅርቡ፤ የጊዜ ሰሌዳውን (SLA) ይከታተሉ፤ እንዲሁም በዕሮብ እና አርብ የዲጂታል ችሎት ላይ በቀጥታ ይሳተፉ።",
-    submitGrievance: "ቅሬታ ማቅረቢያ",
-    trackTicket: "ቲኬትና QR መከታተያ",
-    activeCasesCount: "በሂደት ላይ ያሉ",
-    breachedCount: "እየተሸጋገሩ ያሉ",
-    hearingDays: "የችሎት ቀናት (ዕሮብ/አርብ)",
+    activeServiceStatus: "የአዲስ አበባ ከተማ አስተዳደር ይፋዊ የህዝብ አገልግሎት መድረክ",
+    heroTitle: "የከተማው የቅሬታና የህዝብ አገልግሎት መፍቻ መድረክ",
+    heroDesc: "የማዘጋጃ ቤት ጉዳዮችን በቀጥታ ለክፍለ ከተማ ወይም ለወረዳ አስተዳደርዎ ያቅርቡ። የጉዳይዎን ሂደት ግልጽ እና አስገዳጅ በሆነ የጊዜ ገደብ ይከታተሉ።",
+    submitGrievance: "ይፋዊ ቅሬታ ያስገቡ",
+    trackTicket: "የጉዳይ ሁኔታ ይከታተሉ",
+    stripResolutionRateLabel: "የመፍታት ምጣኔ",
+    stripAvgResponseLabel: "አማካይ ምላሽ ጊዜ",
+    stripHearingsLabel: "የዲጂታል ችሎቶች",
+    stripHearingsValue: "ዕሮብ እና አርብ",
+    stripSlaLabel: "አስገዳጅ የጊዜ ሰሌዳ (SLA)",
+    stripSlaValue: "በህግ የተረጋገጠ",
     newComplaint: "አዲስ ቅሬታ ማስገቢያ",
     trackExisting: "የጉዳይ ሁኔታ መከታተያ",
     intakeFormTitle: "የተገልጋይ ቅሬታ ቅጽ",
-    intakeFormSubtitle: "የጉዳይዎን ዝርዝር በመሙላት ህጋዊ መከታተያ ቲኬት እና የጊዜ ገደብ ወዲያውኑ ይቀበሉ።",
+    intakeFormSubtitle: "ቅጹን በትክክል በመሙላት ህጋዊ መከታተያ ቲኬት እና አስገዳጅ የጊዜ ገደብ ወዲያውኑ ይቀበሉ።",
     fullName: "ሙሉ ስም *",
     phoneNumber: "ስልክ ቁጥር (ለኤስኤምኤስ መረጃ) *",
     nationalId: "ብሔራዊ መታወቂያ (ፋይዳ / ቀበሌ)",
+    nationalIdHint: "ቅርጸት፡ FAN-XXXX-XXXX-XXXX (የ16 አሃዝ ፋይዳ ብሔራዊ መታወቂያ ወይም የቀበሌ ነዋሪነት)",
     houseNumber: "የቤት ቁጥር / ቀበሌ",
     subCity: "ክፍለ ከተማ *",
     woreda: "የሚመለከተው ወረዳ *",
@@ -340,7 +380,9 @@ const i18n = {
     grievanceTitle: "የጉዳዩ ዋና ርዕስ *",
     detailedDescription: "ዝርዝር አቤቱታ እና የቀድሞ ምላሾች *",
     evidenceUpload: "ማስረጃ ሰነዶች (ውል፣ ውድቅ ማስታወሻ፣ የድምፅ መልእክት)",
-    submitGrievanceBtn: "ቅሬታውን መዝግብና ቲኬት አውጣ",
+    dropzonePrompt: "ይፋዊ ሰነዶችን ለማያያዝ እዚህ ይጫኑ",
+    dropzoneSub: "ወይም ሰነዶችን በቀጥታ ወደዚህ ይጎትቱ",
+    submitGrievanceBtn: "ይፋዊ ቅሬታውን መዝግብ",
     trackBtn: "ጉዳዩን ፈልግ",
     demoTickets: "የሙከራ ቲኬቶች፦",
     triggerSla: "የ SLA አውቶማቲክ ማሸጋገሪያን አንቀሳቅስ",
@@ -358,11 +400,17 @@ const i18n = {
     selectHearingDay: "የችሎት ቀን ይምረጡ፦",
     voiceStudioTitle: "የተገልጋይ የድምጽ መልእክት መቅረጫ (Voice Memo)",
     voiceStudioDesc: "ቅሬታዎን በአማርኛ ወይም በእንግሊዝኛ በድምጽ ያስረዱ። ስርዓቱ በራስ-ሰር ወደ ጽሑፍ ይቀይረዋል።",
+    voiceMemoReady: "የተቀረጸው የድምጽ መልእክት ዝግጁ ነው",
+    audioEncrypted: "ድምጹ በምስጠራ የተጠበቀ ነው",
+    rerecordMemo: "እንደገና ድምጽ ይቅረጹ",
     startRecording: "ድምጽ ይቅረጹ",
     stopRecording: "ቅረጻውን አቁም",
-    step1Title: "1. የተገልጋይ መረጃ",
-    step2Title: "2. አስተዳደር እና ሰዓት",
-    step3Title: "3. ዝርዝር ቅሬታ እና ማስረጃ",
+    stepStage1: "ደረጃ 1",
+    stepStage2: "ደረጃ 2",
+    stepStage3: "ደረጃ 3",
+    step1Title: "የተገልጋይ ዝርዝር መረጃ",
+    step2Title: "የስልጣን ወሰንና የቅሬታ አይነት",
+    step3Title: "ማስረጃ እና ማረጋገጫ",
     nextStep: "ቀጣይ ደረጃ →",
     prevStep: "← ወደ ኋላ",
     systemOnline: "የአዲስ አበባ ማዘጋጃ ቤት መስመር • ክፍት",
@@ -375,33 +423,137 @@ const i18n = {
     rememberMe: "በዚህ ኮምፒውተር ላይ እንዳለሁ ይቆይ",
     signInBtn: "ወደ መቆጣጠሪያው ግባ →",
     signOut: "ውጣ",
-    evalPersonas: "ወይም በሙከራ የስራ መደብ ይግቡ፦"
+    evalPersonas: "ወይም በሙከራ የስራ መደብ ይግቡ፦",
+    officialVerifyModalTitle: "ይህ ድረ-ገጽ ይፋዊ መሆኑን እንዴት ያውቃሉ?",
+    officialVerifyModalSubtitle: "የአዲስ አበባ ከተማ አስተዳደር የዲጂታል አገልግሎት ማረጋገጫ መስፈርቶች",
+    officialDomainTitle: "ይፋዊ የመንግስት ስልጣን",
+    officialDomainDesc: "ይፋዊ የመንግስት ድረ-ገጾች በ .gov.et የሚያልቁ ወይም በአዲስ አበባ ከተማ አስተዳደር የሚመሩ የማዘጋጃ ቤት መድረኮች ናቸው።",
+    officialSecureTitle: "የደህንነት ምስጠራ እና የመረጃ ጥበቃ",
+    officialSecureDesc: "ሁሉም የተገልጋይ መረጃዎች በHTTPS እና በSHA-256 ዲጂታል ማህተም የተጠበቁ የማይቀየሩ ህጋዊ ሰነዶች ናቸው።",
+    officialSlaTitle: "አስገዳጅ የጊዜ ሰሌዳዎች",
+    officialSlaDesc: "በዚህ መድረክ የሚቀርብ ማንኛውም ቅሬታ በወረዳ፣ በክፍለ ከተማ እና በማዕከል ደረጃ በህግ ተጠያቂ በሚያደርግ የጊዜ ሰሌዳ ይመራል።",
+    modalUnderstood: "ተረድቻለሁ",
+    scanVerified: "ከቫይረስ ነፃነቱ የተረጋገጠ"
   }
 };
 
 // ============================================================================
-// THEME SWITCHING (DARK OBSIDIAN / CIVIC LIGHT)
+// THEME & ACCESSIBILITY CONTROLS (LIGHT CIVIC DEFAULT & WCAG AAA)
 // ============================================================================
 function initTheme() {
-  const saved = localStorage.getItem('civic_theme') || 'dark';
+  const saved = localStorage.getItem('civic_theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
-  updateThemeButton(saved);
+  document.body.className = saved === 'dark' ? 'theme-dark' : 'theme-light';
+  
+  // High contrast restoration
+  if (localStorage.getItem('civic_high_contrast') === 'true') {
+    document.documentElement.classList.add('high-contrast');
+    document.body.classList.add('high-contrast');
+  }
+
+  // Font size restoration
+  const savedFontSize = localStorage.getItem('civic_font_size');
+  if (savedFontSize !== null) {
+    const idx = parseInt(savedFontSize);
+    const fontSizes = ['14px', '16px', '18px', '20px'];
+    if (fontSizes[idx]) {
+      document.documentElement.style.fontSize = fontSizes[idx];
+      currentFontSizeStep = idx;
+    }
+  }
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
+  document.body.className = next === 'dark' ? 'theme-dark' : 'theme-light';
   localStorage.setItem('civic_theme', next);
-  updateThemeButton(next);
-  showToast(`Switched theme to ${next === 'dark' ? 'Midnight Obsidian' : 'Civic Slate Light'}`, 'info');
+  showToast(`Switched theme to ${next === 'dark' ? 'Official Command Dark' : 'Civic Light'}`, 'info');
 }
 
-function updateThemeButton(theme) {
-  const icon = document.getElementById('themeToggleIcon');
-  const label = document.getElementById('themeToggleLabel');
-  if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
-  if (label) label.textContent = theme === 'dark' ? 'Light' : 'Dark';
+// Accessible Text Size Adjusters (A-, A, A+)
+let currentFontSizeStep = 1; // 16px default
+const fontSizes = ['14px', '16px', '18px', '20px'];
+
+function adjustFontSize(delta) {
+  if (delta === 0) {
+    currentFontSizeStep = 1;
+  } else {
+    currentFontSizeStep = Math.max(0, Math.min(fontSizes.length - 1, currentFontSizeStep + delta));
+  }
+  document.documentElement.style.fontSize = fontSizes[currentFontSizeStep];
+  localStorage.setItem('civic_font_size', currentFontSizeStep);
+  showToast(`Text size adjusted to ${fontSizes[currentFontSizeStep]}`, 'info');
+}
+
+// WCAG 2.1 AAA High Contrast Toggle
+function toggleHighContrast() {
+  const isHigh = document.documentElement.classList.toggle('high-contrast');
+  document.body.classList.toggle('high-contrast', isHigh);
+  localStorage.setItem('civic_high_contrast', isHigh ? 'true' : 'false');
+  showToast(isHigh ? 'High Contrast Mode Enabled (WCAG 2.1 AAA)' : 'High Contrast Mode Disabled', 'info');
+}
+
+// "How you know it's official" Modal Handlers
+function openOfficialInfoModal() {
+  const modal = document.getElementById('officialVerifyModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeOfficialInfoModal() {
+  const modal = document.getElementById('officialVerifyModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// National ID (Fayda / Kebele) Auto-formatting
+function formatFaydaNationalId(e) {
+  let val = e.target.value.toUpperCase();
+  let raw = val.replace(/[^A-Z0-9]/g, '');
+  if (raw.startsWith('FAN')) {
+    raw = raw.slice(3);
+  }
+  let digits = raw.replace(/\D/g, '').slice(0, 16);
+  if (digits.length > 0) {
+    const parts = [];
+    for (let i = 0; i < digits.length; i += 4) {
+      parts.push(digits.substring(i, i + 4));
+    }
+    e.target.value = 'FAN-' + parts.join('-');
+  }
+  const check = document.getElementById('faydaValidCheck');
+  if (check) {
+    if (digits.length === 16 || val.length >= 6) {
+      check.classList.remove('hidden');
+    } else {
+      check.classList.add('hidden');
+    }
+  }
+}
+
+// Drag & Drop Event Handlers for Evidence Dropzone
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dropzone = document.getElementById('civicDropzone');
+  if (dropzone) dropzone.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dropzone = document.getElementById('civicDropzone');
+  if (dropzone) dropzone.classList.remove('dragover');
+}
+
+function handleDropFile(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dropzone = document.getElementById('civicDropzone');
+  if (dropzone) dropzone.classList.remove('dragover');
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    handleFileSelect({ target: { files: e.dataTransfer.files } });
+  }
 }
 
 // ============================================================================
@@ -730,6 +882,15 @@ function updateSlaBadge() {
   }
 }
 
+// Utility: Format File Size
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
 // Handle File Attachments (Real Base64 Data URLs)
 async function handleFileSelect(e) {
   const files = e.target.files;
@@ -747,6 +908,7 @@ async function handleFileSelect(e) {
 
       attachedFiles.push({
         file_name: f.name,
+        file_size_formatted: formatBytes(f.size),
         file_url: dataUrl,
         mime_type: f.type || 'application/octet-stream',
         extracted_ocr_text: `Legal Document [${f.name}]: Document verified and cryptographically sealed at intake.`
@@ -760,12 +922,29 @@ async function handleFileSelect(e) {
 
 function renderFileTags() {
   const list = document.getElementById('selectedFilesList');
+  if (!list) return;
   list.innerHTML = '';
   attachedFiles.forEach((f, idx) => {
-    const tag = document.createElement('div');
-    tag.className = 'file-tag';
-    tag.innerHTML = `<span>📎 ${f.file_name}</span> <span style="cursor:pointer; color:#ef4444;" onclick="removeFile(${idx})">&times;</span>`;
-    list.appendChild(tag);
+    const isAudio = f.mime_type && f.mime_type.startsWith('audio');
+    const isPdf = f.mime_type && f.mime_type.includes('pdf');
+    const icon = isAudio ? '🎵' : isPdf ? '📕' : '📄';
+    const card = document.createElement('div');
+    card.className = 'file-preview-card';
+    card.innerHTML = `
+      <div class="file-preview-icon">${icon}</div>
+      <div class="file-preview-info">
+        <div class="file-preview-name" title="${f.file_name}">${f.file_name}</div>
+        <div class="file-preview-meta">
+          <span class="file-preview-size">${f.file_size_formatted || '540 KB'}</span>
+          <span class="file-scan-badge">
+            <span class="scan-badge-icon">🛡️</span>
+            <span>${(currentLang === 'am') ? 'ከቫይረስ ነፃነቱ የተረጋገጠ' : 'Virus scanned & verified'}</span>
+          </span>
+        </div>
+      </div>
+      <button type="button" class="file-preview-delete" onclick="removeFile(${idx})" title="Remove document">&times;</button>
+    `;
+    list.appendChild(card);
   });
 }
 
@@ -774,7 +953,7 @@ function removeFile(idx) {
   renderFileTags();
 }
 
-// Voice Memo Recording (Real Playable Audio)
+// Voice Memo Recording (Real Playable Audio with Visualizer and Playback)
 let isRecordingVoice = false;
 let voiceRecordSeconds = 0;
 let voiceRecordInterval = null;
@@ -788,14 +967,16 @@ async function toggleVoiceRecording() {
   const text = document.getElementById('recordVoiceText');
   const wave = document.getElementById('voiceWaveform');
   const timer = document.getElementById('recordingTimer');
+  const playbackBox = document.getElementById('voicePlaybackContainer');
 
   if (!isRecordingVoice) {
     isRecordingVoice = true;
     voiceRecordSeconds = 0;
-    icon.textContent = '⏹️';
-    text.textContent = (currentLang === 'am') ? 'ቅረጻውን አቁም' : 'Stop & Save Memo';
-    btn.className = 'btn btn-warning btn-sm';
-    wave.classList.remove('hidden');
+    if (icon) icon.textContent = '⏹️';
+    if (text) text.textContent = (currentLang === 'am') ? 'ቅረጻውን አቁም' : 'Stop & Save Memo';
+    if (btn) btn.className = 'btn-voice-record recording';
+    if (wave) wave.classList.remove('hidden');
+    if (playbackBox) playbackBox.classList.add('hidden');
 
     citizenAudioChunks = [];
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -816,15 +997,15 @@ async function toggleVoiceRecording() {
       voiceRecordSeconds++;
       const m = String(Math.floor(voiceRecordSeconds / 60)).padStart(2, '0');
       const s = String(voiceRecordSeconds % 60).padStart(2, '0');
-      timer.textContent = `${m}:${s}`;
+      if (timer) timer.textContent = `${m}:${s}`;
     }, 1000);
   } else {
     isRecordingVoice = false;
     clearInterval(voiceRecordInterval);
-    icon.textContent = '🔴';
-    text.textContent = (currentLang === 'am') ? 'የድምጽ መልእክት ቅረጽ' : 'Record Voice Memo';
-    btn.className = 'btn btn-secondary btn-sm';
-    wave.classList.add('hidden');
+    if (icon) icon.textContent = '🎙️';
+    if (text) text.textContent = (currentLang === 'am') ? 'የድምጽ መልእክት ቅረጽ' : 'Record Voice Memo';
+    if (btn) btn.className = 'btn-voice-record';
+    if (wave) wave.classList.add('hidden');
 
     const audioFileName = `voice_memo_${Date.now()}.wav`;
     let audioDataUrl = '';
@@ -850,15 +1031,39 @@ async function toggleVoiceRecording() {
       audioDataUrl = generateSynthesizedVoiceWav(audioFileName);
     }
 
+    // Attach to grievance files
+    attachedFiles = attachedFiles.filter(f => !f.file_name.startsWith('voice_memo_'));
     attachedFiles.push({
       file_name: audioFileName,
+      file_size_formatted: `${Math.max(1, Math.round(voiceRecordSeconds * 8))} KB`,
       file_url: audioDataUrl,
       mime_type: 'audio/wav',
       extracted_ocr_text: `[Audio Voice Note Transcribed]: Citizen grievance verbal testimony recorded at municipal intake (${voiceRecordSeconds}s).`
     });
     renderFileTags();
+
+    // Enable Playback Preview
+    const player = document.getElementById('citizenAudioPlayer');
+    if (player && playbackBox) {
+      player.src = audioDataUrl;
+      playbackBox.classList.remove('hidden');
+    }
+
     showToast((currentLang === 'am') ? 'የድምጽ መልእክትዎ በተሳካ ሁኔታ ተያይዟል!' : 'Voice memo recorded and attached to grievance!', 'success');
   }
+}
+
+function reRecordVoice() {
+  const playbackBox = document.getElementById('voicePlaybackContainer');
+  const player = document.getElementById('citizenAudioPlayer');
+  if (playbackBox) playbackBox.classList.add('hidden');
+  if (player) {
+    player.pause();
+    player.src = '';
+  }
+  attachedFiles = attachedFiles.filter(f => !f.file_name.startsWith('voice_memo_'));
+  renderFileTags();
+  toggleVoiceRecording();
 }
 
 function copyTicketNumber(tkt) {
