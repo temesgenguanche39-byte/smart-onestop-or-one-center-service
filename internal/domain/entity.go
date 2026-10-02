@@ -91,7 +91,7 @@ type CaseAttachment struct {
 	ID               uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 	CaseID           uuid.UUID `gorm:"type:uuid;not null;index" json:"case_id"`
 	FileName         string    `gorm:"size:255;not null" json:"file_name"`
-	FileURL          string    `gorm:"size:500;not null" json:"file_url"`
+	FileURL          string    `gorm:"type:text;not null" json:"file_url"`
 	MIMEType         string    `gorm:"size:50;not null" json:"mime_type"`
 	ExtractedOCRText string    `gorm:"type:text" json:"extracted_ocr_text,omitempty"`
 	UploadedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"uploaded_at"`

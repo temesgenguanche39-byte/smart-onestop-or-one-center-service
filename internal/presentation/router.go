@@ -64,6 +64,10 @@ func SetupRouter(rc *RouterConfig) *gin.Engine {
 		r.StaticFile("/", "web/static/index.html")
 	}
 
+	// 2b. Static Uploads Vault (Evidence Documents & Voice Memos)
+	_ = os.MkdirAll("uploads", 0755)
+	r.Static("/uploads", "./uploads")
+
 	// 3. API v1 Routes
 	api := r.Group("/api/v1")
 	{
