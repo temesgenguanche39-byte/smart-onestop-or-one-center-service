@@ -1323,13 +1323,477 @@ body.high-contrast .btn-civic-primary {
   border-color: var(--color-primary);
 }
 
+/* ---------- Ticket Detail Card — Enterprise Layout ---------- */
 .track-detail-card {
-  background: #FFFFFF;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 1.75rem;
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  box-shadow: var(--shadow-md);
   margin-top: 1rem;
+  overflow: hidden;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---- Header Row: Ticket ID + SLA Counter ---- */
+.ticket-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  flex-wrap: wrap;
+}
+
+.ticket-id-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ticket-num-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
+}
+
+.ticket-num-badge .ticket-emoji {
+  font-size: 1.2rem;
+}
+
+.copy-ticket-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.copy-ticket-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.ticket-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Override status-badge colors on dark header */
+.ticket-header-row .status-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+.ticket-tier-text {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ticket-tier-text strong {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* SLA Countdown Box */
+.sla-countdown-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  min-width: 200px;
+}
+
+.sla-clock-icon {
+  font-size: 1.5rem;
+}
+
+.sla-clock-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sla-clock-time {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.sla-clock-time.text-green { color: #86EFAC; }
+.sla-clock-time.text-red { color: #FCA5A5; }
+
+/* ---- Body Content ---- */
+.ticket-body {
+  padding: 1.5rem;
+}
+
+/* ---- Progression Timeline (horizontal stepper) ---- */
+.status-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0.5rem 0 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+/* Connector line behind circles */
+.status-timeline::before {
+  content: '';
+  position: absolute;
+  top: calc(0.5rem + 16px);
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--color-border);
+  z-index: 0;
+}
+
+/* ---- 2-Column Detail Layout ---- */
+.track-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Left column: Application details */
+.detail-left-column {}
+
+.detail-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary);
+  display: inline-block;
+}
+
+.detail-description {
+  font-size: 0.92rem;
+  color: var(--color-muted);
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+/* Info rows — key/value pairs */
+.info-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: baseline;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  gap: 0.75rem;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 0.88rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* Right column: QR Verification */
+.qr-verification-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.qr-column-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#qrCodeCanvas {
+  border: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  background: #FFFFFF;
+}
+
+.qr-hash-text {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-muted);
+  word-break: break-all;
+  max-width: 200px;
+  line-height: 1.4;
+}
+
+.qr-scan-hint {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  margin-top: 0.25rem;
+}
+
+.qr-seal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+  padding: 4px 10px;
+  background: var(--color-success-light);
+  border: 1px solid rgba(30, 107, 55, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+/* ---- Audit Ledger Trail ---- */
+.audit-ledger-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.audit-ledger-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.audit-ledger-title .audit-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  color: var(--color-muted);
+}
+
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+/* Vertical connector line */
+.audit-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 1px;
+}
+
+.audit-log-entry {
+  position: relative;
+  padding: 0.55rem 0 0.55rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Timeline dot */
+.audit-log-entry::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: 0.72rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid var(--color-surface);
+  z-index: 1;
+}
+
+.audit-log-entry:last-child::before {
+  background: var(--color-border);
+}
+
+.audit-action-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.audit-action-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.audit-action-time {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--color-muted);
+}
+
+.audit-action-notes {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+/* ---- Not Found Card ---- */
+.track-not-found {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.track-not-found h3 {
+  color: var(--color-danger);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.track-not-found p {
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.track-not-found code {
+  background: var(--color-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+/* ---- Responsive: Stack columns on mobile ---- */
+@media (max-width: 768px) {
+  .ticket-header-row {
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem 1.15rem;
+  }
+
+  .sla-countdown-box {
+    min-width: auto;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ticket-body {
+    padding: 1.15rem;
+  }
+
+  .track-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .qr-verification-column {
+    order: -1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.85rem;
+  }
+
+  .info-label {
+    min-width: 110px;
+    font-size: 0.74rem;
+  }
+
+  .status-timeline {
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-num-badge {
+    font-size: 0.92rem;
+  }
+
+  .sla-clock-time {
+    font-size: 1rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.45rem 0;
+  }
+
+  .info-label {
+    min-width: auto;
+  }
+
+  .audit-action-label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+
+  .qr-verification-column {
+    flex-direction: column;
+  }
 }
 
 /* Status Timeline */

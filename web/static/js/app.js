@@ -1578,10 +1578,12 @@ async function renderTicketResult(rawQuery) {
 
   // 5. Truly not found (e.g. random non-ticket string like "hello")
   container.innerHTML = `
-    <div class="track-detail-card" style="text-align:center;">
-      <h3 style="color:#ef4444; margin-bottom:0.5rem;">❌ Ticket Not Found</h3>
-      <p style="color:#94a3b8;">No registered grievance matches query: <strong>${query}</strong></p>
-      <p style="font-size:0.85rem; color:#64748b; margin-top:0.5rem;">Please check your ticket number format (e.g. <code>TKT-2026-XXXXXX</code>) or scan your QR code.</p>
+    <div class="track-detail-card">
+      <div class="track-not-found">
+        <h3>❌ Ticket Not Found</h3>
+        <p>No registered grievance matches query: <strong>${query}</strong></p>
+        <p style="margin-top:0.5rem;">Please check your ticket number format (e.g. <code>TKT-2026-XXXXXX</code>) or scan your QR code.</p>
+      </div>
     </div>`;
 }
 
@@ -1666,17 +1668,18 @@ function renderDetailedTicketCard(c, container) {
 
   container.innerHTML = `
     <div class="track-detail-card">
+      <!-- Navy Header: Ticket ID + SLA Counter -->
       <div class="ticket-header-row">
-        <div>
+        <div class="ticket-id-block">
           <div class="ticket-num-badge">
-            <span>🎫</span> ${c.ticket_number}
+            <span class="ticket-emoji">🎫</span> ${c.ticket_number}
             <button type="button" class="copy-ticket-btn" onclick="copyTicketNumber('${c.ticket_number}')" title="Copy Ticket #">
-              <span>📋 Copy</span>
+              📋 Copy
             </button>
           </div>
-          <div style="margin-top:0.3rem;">
-            <span class="status-badge status-${c.status}">${c.status.replace(/_/g, ' ')}</span>
-            <span style="font-size:0.8rem; color:#94a3b8; margin-left:0.5rem;">Escalation Tier: <strong>${structureName} (${structureLevel})</strong></span>
+          <div class="ticket-meta-row">
+            <span class="status-badge ${c.status}">${c.status.replace(/_/g, ' ')}</span>
+            <span class="ticket-tier-text">Escalation Tier: <strong>${structureName} (${structureLevel})</strong></span>
           </div>
         </div>
 
@@ -1689,62 +1692,74 @@ function renderDetailedTicketCard(c, container) {
         </div>
       </div>
 
-      <!-- Progression Timeline -->
-      <div class="status-timeline">
-        ${stepHtml}
-      </div>
-
-      ${hearingBanner}
-      ${resolutionBox}
-
-      <!-- Detailed Info & QR Verification -->
-      <div class="track-info-grid">
-        <div>
-          <h3 style="font-size:1.15rem; margin-bottom:0.75rem;">${c.title}</h3>
-          <p style="font-size:0.9rem; color:#cbd5e1; margin-bottom:1.25rem;">${c.description}</p>
-
-          <div class="info-row">
-            <div class="info-label">Applicant:</div>
-            <div class="info-value">${citizenName} (${citizenPhone})</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Classification:</div>
-            <div class="info-value">${serviceTypeName}</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Jurisdiction Tier:</div>
-            <div class="info-value">${structureName} [Level: ${structureLevel}]</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Assigned Officer:</div>
-            <div class="info-value">${assignedOfficer}</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Lodged At:</div>
-            <div class="info-value">${formatCivicDate(c.created_at, { showTime: true })}</div>
-          </div>
+      <!-- Body Content -->
+      <div class="ticket-body">
+        <!-- Progression Timeline -->
+        <div class="status-timeline">
+          ${stepHtml}
         </div>
 
-        <div class="qr-box">
-          <div id="qrCodeCanvas"></div>
-          <div class="qr-hash-text">${c.qr_verification_code}</div>
-          <div style="font-size:0.7rem; color:#666; margin-top:0.25rem;">Scan to verify authenticity</div>
-        </div>
-      </div>
+        ${hearingBanner}
+        ${resolutionBox}
 
-      <!-- Audit History -->
-      <div style="margin-top:2rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:1.5rem;">
-        <h4 style="font-size:0.95rem; margin-bottom:1rem; color:#94a3b8;">📜 Cryptographic Audit Ledger Trail (${c.audit_logs?.length || 0} events)</h4>
-        <div style="display:flex; flex-direction:column; gap:0.6rem;">
-          ${(c.audit_logs || []).map(l => `
-            <div style="background:rgba(10,15,29,0.5); padding:0.65rem 0.85rem; border-radius:8px; font-size:0.8rem; border:1px solid rgba(255,255,255,0.05);">
-              <div style="display:flex; justify-content:space-between; font-weight:600; color:#3b82f6;">
-                <span>${l.action}</span>
-                <span style="color:#64748b; font-family:var(--font-mono);">${new Date(l.created_at).toLocaleTimeString()}</span>
+        <!-- 2-Column: Application Details + QR Verification -->
+        <div class="track-info-grid">
+          <div class="detail-left-column">
+            <div class="detail-section-title">${c.title}</div>
+            <p class="detail-description">${c.description}</p>
+
+            <div class="info-rows-list">
+              <div class="info-row">
+                <div class="info-label">Applicant</div>
+                <div class="info-value">${citizenName} (${citizenPhone})</div>
               </div>
-              <div style="color:#94a3b8; margin-top:0.15rem;">${l.notes || ''} (Actor: ${l.performer_name})</div>
+              <div class="info-row">
+                <div class="info-label">Classification</div>
+                <div class="info-value">${serviceTypeName}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Jurisdiction</div>
+                <div class="info-value">${structureName} [Level: ${structureLevel}]</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Assigned Officer</div>
+                <div class="info-value">${assignedOfficer}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Lodged At</div>
+                <div class="info-value">${formatCivicDate(c.created_at, { showTime: true })}</div>
+              </div>
             </div>
-          `).join('')}
+          </div>
+
+          <div class="qr-verification-column">
+            <div class="qr-column-title">Verification QR</div>
+            <div class="qr-box">
+              <div id="qrCodeCanvas"></div>
+              <div class="qr-hash-text">${c.qr_verification_code}</div>
+              <div class="qr-scan-hint">Scan to verify authenticity</div>
+            </div>
+            <div class="qr-seal-badge">🛡️ Civic Seal Verified</div>
+          </div>
+        </div>
+
+        <!-- Audit Ledger Trail -->
+        <div class="audit-ledger-section">
+          <div class="audit-ledger-title">
+            📜 Cryptographic Audit Ledger
+            <span class="audit-count-badge">${c.audit_logs?.length || 0}</span>
+          </div>
+          <div class="audit-timeline">
+            ${(c.audit_logs || []).map(l => `
+              <div class="audit-log-entry">
+                <div class="audit-action-label">
+                  <span class="audit-action-name">${l.action}</span>
+                  <span class="audit-action-time">${new Date(l.created_at).toLocaleTimeString()}</span>
+                </div>
+                <div class="audit-action-notes">${l.notes || ''} — <strong>${l.performer_name}</strong></div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>
     </div>
